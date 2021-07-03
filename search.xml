@@ -2814,7 +2814,7 @@ Windows 平台
   </entry>
   <entry>
     <title>软件收集</title>
-    <url>/2021/07/03/nonfree-software-collection.html</url>
+    <url>/2021/07/03/software-collection.html</url>
     <content><![CDATA[<blockquote>
 <p>本文用来记录曾经使用过的软件。</p>
 </blockquote>
@@ -2826,6 +2826,7 @@ Windows 平台
 <h2 id="视频编辑"><a href="#视频编辑" class="headerlink" title="视频编辑"></a>视频编辑</h2><p><a href="http://fixounet.free.fr/avidemux/">Avidemux</a></p>
 <h2 id="Xserver"><a href="#Xserver" class="headerlink" title="Xserver"></a>Xserver</h2><p><a href="https://sourceforge.net/projects/vcxsrv/files/vcxsrv/">Vcxsrv</a></p>
 <h2 id="PXE"><a href="#PXE" class="headerlink" title="PXE"></a>PXE</h2><p><a href="https://ipxe.org/">iPXE</a></p>
+<h2 id="编译器"><a href="#编译器" class="headerlink" title="编译器"></a>编译器</h2><p><a href="https://godbolt.org/">Compiler Explore</a></p>
 ]]></content>
       <categories>
         <category>软件资源</category>
