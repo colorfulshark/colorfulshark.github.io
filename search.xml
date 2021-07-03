@@ -2812,4 +2812,26 @@ Windows 平台
         <tag>toastmaster</tag>
       </tags>
   </entry>
+  <entry>
+    <title>软件收集</title>
+    <url>/2021/07/03/nonfree-software-collection.html</url>
+    <content><![CDATA[<blockquote>
+<p>本文用来记录曾经使用过的软件。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="软件站点"><a href="#软件站点" class="headerlink" title="软件站点"></a>软件站点</h1><p><a href="https://www.isharepc.com/">乐软博客</a></p>
+<h1 id="软件资源"><a href="#软件资源" class="headerlink" title="软件资源"></a>软件资源</h1><h2 id="Matlab"><a href="#Matlab" class="headerlink" title="Matlab"></a>Matlab</h2><p><a href="https://www.isharepc.com/14196.html">MathWorks MATLAB R2021a中文破解版</a></p>
+<h2 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h2><p><a href="https://www.diagrams.net/">Diagrams</a></p>
+<h2 id="视频编辑"><a href="#视频编辑" class="headerlink" title="视频编辑"></a>视频编辑</h2><p><a href="http://fixounet.free.fr/avidemux/">Avidemux</a></p>
+<h2 id="Xserver"><a href="#Xserver" class="headerlink" title="Xserver"></a>Xserver</h2><p><a href="https://sourceforge.net/projects/vcxsrv/files/vcxsrv/">Vcxsrv</a></p>
+<h2 id="PXE"><a href="#PXE" class="headerlink" title="PXE"></a>PXE</h2><p><a href="https://ipxe.org/">iPXE</a></p>
+]]></content>
+      <categories>
+        <category>软件资源</category>
+      </categories>
+      <tags>
+        <tag>软件</tag>
+      </tags>
+  </entry>
 </search>
