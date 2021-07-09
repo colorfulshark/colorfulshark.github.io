@@ -24,7 +24,7 @@
   <meta name="description" content="作为Linux内核工程师，QEMU是日常工作中经常接触的一个虚拟化工具，通过其CPU以及外设的模拟能力，我们很容易搭建出一套用于测试或开发的虚拟环境。以前在使用时通常都是直接去引导内核，但其实QEMU并不只是能够引导内核，任何拥有硬件初始化和管理能力的二进制程序它都可以引导运行。今天我们就使用qemu引导uboot，并在uboot中启动内核。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="在QEMU中启动U-Boot和内核">
-<meta property="og:url" content="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+<meta property="og:url" content="https://blog.colorfulshark.net/2021/01/31/boot-kernel-in-uboot-from-qemu.html">
 <meta property="og:site_name" content="colorfulshark">
 <meta property="og:description" content="作为Linux内核工程师，QEMU是日常工作中经常接触的一个虚拟化工具，通过其CPU以及外设的模拟能力，我们很容易搭建出一套用于测试或开发的虚拟环境。以前在使用时通常都是直接去引导内核，但其实QEMU并不只是能够引导内核，任何拥有硬件初始化和管理能力的二进制程序它都可以引导运行。今天我们就使用qemu引导uboot，并在uboot中启动内核。">
 <meta property="og:locale" content="zh_CN">
@@ -36,7 +36,7 @@
 <meta property="article:tag" content="kernel">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+<link rel="canonical" href="https://blog.colorfulshark.net/2021/01/31/boot-kernel-in-uboot-from-qemu.html">
 
 
 <script id="page-configurations">
@@ -130,12 +130,12 @@
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">37</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">38</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">36</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">37</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -189,7 +189,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2021/01/31/boot-kernel-in-uboot-from-qemu.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/uploads/avatar.jpg">
@@ -212,14 +212,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-30 16:08:29" itemprop="dateCreated datePublished" datetime="2021-01-30T16:08:29+00:00">2021-01-30</time>
+              <time title="创建时间：2021-01-31 00:08:29" itemprop="dateCreated datePublished" datetime="2021-01-31T00:08:29+08:00">2021-01-31</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-07-03 06:11:25" itemprop="dateModified" datetime="2021-07-03T06:11:25+00:00">2021-07-03</time>
+                <time title="修改时间：2021-07-03 14:11:25" itemprop="dateModified" datetime="2021-07-03T14:11:25+08:00">2021-07-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -252,8 +252,8 @@
       </span>
       <span class="post-meta-item-text">Disqus：</span>
     
-    <a title="disqus" href="/2021/01/30/boot-kernel-in-uboot-from-qemu.html#disqus_thread" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/01/30/boot-kernel-in-uboot-from-qemu.html" itemprop="commentCount"></span>
+    <a title="disqus" href="/2021/01/31/boot-kernel-in-uboot-from-qemu.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/01/31/boot-kernel-in-uboot-from-qemu.html" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -469,7 +469,7 @@
       <i class="fa fa-chevron-left"></i> DLP的工作原理
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/01/30/install-cross-toolchain-for-arm.html" rel="next" title="安装Arm交叉编译工具链">
+    <a href="/2021/01/31/install-cross-toolchain-for-arm.html" rel="next" title="安装Arm交叉编译工具链">
       安装Arm交叉编译工具链 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -553,14 +553,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-count">37</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-count">38</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
@@ -683,8 +683,8 @@
 </script>
 <script>
   var disqus_config = function() {
-    this.page.url = "https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html";
-    this.page.identifier = "2021/01/30/boot-kernel-in-uboot-from-qemu.html";
+    this.page.url = "https://blog.colorfulshark.net/2021/01/31/boot-kernel-in-uboot-from-qemu.html";
+    this.page.identifier = "2021/01/31/boot-kernel-in-uboot-from-qemu.html";
     this.page.title = "在QEMU中启动U-Boot和内核";
     };
   NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {

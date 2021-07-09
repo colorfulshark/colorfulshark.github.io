@@ -21,22 +21,21 @@
     var CONFIG = {"hostname":"blog.colorfulshark.net","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="通常我们使用的Arm交叉编译器都是从各种开发板的SDK中得到的，那些toolchain的版本有可能比较旧或者无法满足我们的编译需求，所以今天来讲一下如何获取并安装一个预编译的Arm交叉工具链。">
+  <meta name="description" content="有时，我们需要在Windows下访问Linux下的文件，但又不想把文件权限搞乱，这时可以使用Samba将Linux下的文件共享给Windows。之所以不使用FTP，是因为它需要将文件下载后才能编辑；而基于SSH的SFTP则不被Windows原生支持，需要额外的客户端。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="安装Arm交叉编译工具链">
-<meta property="og:url" content="https://blog.colorfulshark.net/2021/01/30/install-cross-toolchain-for-arm.html">
+<meta property="og:title" content="在Debian下配置Samba服务器">
+<meta property="og:url" content="https://blog.colorfulshark.net/2018/12/30/configure-samba-server-under-debian.html">
 <meta property="og:site_name" content="colorfulshark">
-<meta property="og:description" content="通常我们使用的Arm交叉编译器都是从各种开发板的SDK中得到的，那些toolchain的版本有可能比较旧或者无法满足我们的编译需求，所以今天来讲一下如何获取并安装一个预编译的Arm交叉工具链。">
+<meta property="og:description" content="有时，我们需要在Windows下访问Linux下的文件，但又不想把文件权限搞乱，这时可以使用Samba将Linux下的文件共享给Windows。之所以不使用FTP，是因为它需要将文件下载后才能编辑；而基于SSH的SFTP则不被Windows原生支持，需要额外的客户端。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2021-01-30T20:34:28.000Z">
-<meta property="article:modified_time" content="2021-07-03T06:11:25.857Z">
+<meta property="article:published_time" content="2018-12-29T21:36:30.000Z">
+<meta property="article:modified_time" content="2021-07-03T06:11:25.781Z">
 <meta property="article:author" content="Ryan Wong">
 <meta property="article:tag" content="linux">
-<meta property="article:tag" content="arm">
-<meta property="article:tag" content="toolchain">
+<meta property="article:tag" content="samba">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.colorfulshark.net/2021/01/30/install-cross-toolchain-for-arm.html">
+<link rel="canonical" href="https://blog.colorfulshark.net/2018/12/30/configure-samba-server-under-debian.html">
 
 
 <script id="page-configurations">
@@ -49,7 +48,7 @@
   };
 </script>
 
-  <title>安装Arm交叉编译工具链 | colorfulshark</title>
+  <title>在Debian下配置Samba服务器 | colorfulshark</title>
   
 
 
@@ -130,12 +129,12 @@
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">37</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">38</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">36</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">37</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -189,7 +188,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2021/01/30/install-cross-toolchain-for-arm.html">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2018/12/30/configure-samba-server-under-debian.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/uploads/avatar.jpg">
@@ -202,7 +201,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          安装Arm交叉编译工具链
+          在Debian下配置Samba服务器
         </h1>
 
         <div class="post-meta">
@@ -212,14 +211,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-30 20:34:28" itemprop="dateCreated datePublished" datetime="2021-01-30T20:34:28+00:00">2021-01-30</time>
+              <time title="创建时间：2018-12-30 05:36:30" itemprop="dateCreated datePublished" datetime="2018-12-30T05:36:30+08:00">2018-12-30</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-07-03 06:11:25" itemprop="dateModified" datetime="2021-07-03T06:11:25+00:00">2021-07-03</time>
+                <time title="修改时间：2021-07-03 14:11:25" itemprop="dateModified" datetime="2021-07-03T14:11:25+08:00">2021-07-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -231,11 +230,7 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" itemprop="url" rel="index"><span itemprop="name">环境搭建</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/arm/" itemprop="url" rel="index"><span itemprop="name">arm</span></a>
+                  <a href="/categories/linux/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">环境配置</span></a>
                 </span>
             </span>
 
@@ -248,8 +243,8 @@
       </span>
       <span class="post-meta-item-text">Disqus：</span>
     
-    <a title="disqus" href="/2021/01/30/install-cross-toolchain-for-arm.html#disqus_thread" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/01/30/install-cross-toolchain-for-arm.html" itemprop="commentCount"></span>
+    <a title="disqus" href="/2018/12/30/configure-samba-server-under-debian.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/12/30/configure-samba-server-under-debian.html" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -265,33 +260,28 @@
 
       
         <blockquote>
-<p>通常我们使用的Arm交叉编译器都是从各种开发板的SDK中得到的，那些toolchain的版本有可能比较旧或者无法满足我们的编译需求，所以今天来讲一下如何获取并安装一个预编译的Arm交叉工具链。</p>
+<p>有时，我们需要在Windows下访问Linux下的文件，但又不想把文件权限搞乱，这时可以使用Samba将Linux下的文件共享给Windows。之所以不使用FTP，是因为它需要将文件下载后才能编辑；而基于SSH的SFTP则不被Windows原生支持，需要额外的客户端。</p>
 </blockquote>
 <span id="more"></span>
 
-<h1 id="工具链的种类"><a href="#工具链的种类" class="headerlink" title="工具链的种类"></a>工具链的种类</h1><p>GCC 的命名规则为：<strong>arch [-vendor] [-os] [-(gnu)eabi]-gcc</strong></p>
-<p>比如 <code>arm-linux-gnueabi-gcc</code> ， <code>arm-none-eabi-gcc</code>， <code>aarch64-linux-gnu-gcc</code></p>
-<ul>
-<li>带[]的是可选部分。</li>
-<li>arch：芯片架构，比如32位的Arm架构对应的arch为arm，64 位的Arm架构对应的arch为aarch64。</li>
-<li>vendor：工具链提供商，大部分工具链名字里面都没有包含这部分。</li>
-<li>os：编译出来的可执行文件(目标文件)针对的操作系统，比如Linux。</li>
-</ul>
-<p>arm-none-eabi-gcc一般适用用于Arm Cortex-M/Cortex-R平台，它使用的是newlib库。</p>
-<p>arm-linux-gnueabi-gcc和aarch64-linux-gnu-gcc适用于Arm Cortex-A系列芯片，前者针对32位芯片，后者针对64位芯片，它使用的是glibc库。可以用来编译u-boot、linux kernel以及应用程序。</p>
-<h1 id="工具链的下载"><a href="#工具链的下载" class="headerlink" title="工具链的下载"></a>工具链的下载</h1><p>现在Arm平台上用的最广泛的工具链是Linaro发布的，大家可以到<a target="_blank" rel="noopener" href="http://releases.linaro.org/components/toolchain/binaries/">Linaro官网</a>下载。</p>
-<p>如果要下载的工具链版本比较新，还可以从<a target="_blank" rel="noopener" href="https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain">Arm官网</a>下载。</p>
-<p>另外，还可以使用国内的<a target="_blank" rel="noopener" href="https://mirrors.tuna.tsinghua.edu.cn/armbian-releases/_toolchain/">清华源</a>以加快下载速度。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget https://developer.arm.com/-/media/Files/downloads/gnu-a/10.2-2020.11/binrel/gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf.tar.xz</span><br></pre></td></tr></table></figure>
+<h1 id="安装Samba"><a href="#安装Samba" class="headerlink" title="安装Samba"></a>安装Samba</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install samba</span><br></pre></td></tr></table></figure>
 
-<h1 id="工具链的安装"><a href="#工具链的安装" class="headerlink" title="工具链的安装"></a>工具链的安装</h1><p>首先需要解压到一个指定的目录，这里我们解压到<code>/usr/local/toolchain</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir -p /usr/local/toolchain</span><br><span class="line">tar -xf gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf.tar.xz -C /usr/local/toolchain/</span><br></pre></td></tr></table></figure>
+<h1 id="配置Samba"><a href="#配置Samba" class="headerlink" title="配置Samba"></a>配置Samba</h1><p>Samba的配置文件比较长，单纯的共享不需要进行复杂设置，只需要在配置文件<code>/etc/samba/smb.conf</code>最下方添加自定义的共享即可。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[my-share]</span></span><br><span class="line">   <span class="attr">comment</span> = my share directory</span><br><span class="line">   <span class="attr">path</span> = &lt;patch to you share directory&gt;</span><br><span class="line">   <span class="attr">browseable</span> = <span class="literal">yes</span></span><br><span class="line">   read <span class="attr">only</span> = <span class="literal">no</span></span><br><span class="line">   guest <span class="attr">ok</span> = <span class="literal">no</span></span><br><span class="line">   create <span class="attr">mask</span> = <span class="number">0644</span></span><br><span class="line">   directory <span class="attr">mask</span> = <span class="number">0775</span></span><br></pre></td></tr></table></figure>
 
-<p>然后我们需要添加环境变量，只有把可执行文件对应的路径加入到 <code>PATH</code> 环境变量里，系统才可以认到这些命令，可以添加到 <code>~/.bashrc</code> 文件的最后。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PATH=$PATH:/usr/local/toolchain/gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf/bin</span><br></pre></td></tr></table></figure>
+<p>如果想要搭建一个匿名访问的共享目录，可以使用下面的配置</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[anon-share]</span></span><br><span class="line">   <span class="attr">path</span> = &lt;patch to you share directory&gt;</span><br><span class="line">   <span class="attr">writeable</span> = <span class="literal">yes</span></span><br><span class="line">   <span class="attr">browseable</span> = <span class="literal">yes</span></span><br><span class="line">   <span class="attr">public</span> = <span class="literal">yes</span></span><br><span class="line">   create <span class="attr">mask</span> = <span class="number">0644</span></span><br><span class="line">   directory <span class="attr">mask</span> = <span class="number">0755</span></span><br><span class="line">   force <span class="attr">user</span> = &lt;username&gt;</span><br></pre></td></tr></table></figure>
 
-<h1 id="查看版本"><a href="#查看版本" class="headerlink" title="查看版本"></a>查看版本</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">arm-none-linux-gnueabihf-gcc -v</span><br></pre></td></tr></table></figure>
+<h1 id="重启Samba服务"><a href="#重启Samba服务" class="headerlink" title="重启Samba服务"></a>重启Samba服务</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> <span class="keyword">if</span> you are using systemd</span></span><br><span class="line">sudo systemctl restart smbd.service</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="keyword">if</span> you are using sysvinit</span></span><br><span class="line">sudo service smbd restart</span><br></pre></td></tr></table></figure>
 
+<h1 id="将用户添加到Samba"><a href="#将用户添加到Samba" class="headerlink" title="将用户添加到Samba"></a>将用户添加到Samba</h1><p>如果你发现自己的用户密码无法用来登陆Samba服务器，那么需要将用户添加到Samba。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo smbpasswd -a &lt;username&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="在Windows下访问Samba服务器"><a href="#在Windows下访问Samba服务器" class="headerlink" title="在Windows下访问Samba服务器"></a>在Windows下访问Samba服务器</h1><h2 id="一般情况下"><a href="#一般情况下" class="headerlink" title="一般情况下"></a>一般情况下</h2><p>打开“网络”，系统会自动搜索网络上的Samba服务器，如果你发现了自己的服务器，直接点击然后登陆即可。</p>
+<h2 id="特殊情况下"><a href="#特殊情况下" class="headerlink" title="特殊情况下"></a>特殊情况下</h2><p>某些情况下，比如本机与Samba服务器有多条网络连接，且速度各异，或者“网络发现”没有及时找到可用的Samba服务器时，可以手动访问Samba服务器。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 打开Windows的资源管理器，在地址栏输入</span></span><br><span class="line">\\xxx.xxx.xxx.xxx</span><br></pre></td></tr></table></figure>
+
+<p>其中“xxx.xxx.xxx.xxx”为Samba服务器的IP地址，此时就可以指定某一网络直接访问Samba服务器了。</p>
 
     </div>
 
@@ -302,8 +292,7 @@
       <footer class="post-footer">
           <div class="post-tags">
               <a href="/tags/linux/" rel="tag"># linux</a>
-              <a href="/tags/arm/" rel="tag"># arm</a>
-              <a href="/tags/toolchain/" rel="tag"># toolchain</a>
+              <a href="/tags/samba/" rel="tag"># samba</a>
           </div>
 
         
@@ -312,12 +301,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/01/30/boot-kernel-in-uboot-from-qemu.html" rel="prev" title="在QEMU中启动U-Boot和内核">
-      <i class="fa fa-chevron-left"></i> 在QEMU中启动U-Boot和内核
+    <a href="/2018/10/15/markdown-syntax.html" rel="prev" title="Markdown语法大全">
+      <i class="fa fa-chevron-left"></i> Markdown语法大全
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/01/31/introduction-of-liquid-lens.html" rel="next" title="什么是液态镜头（Liquid Lens）">
-      什么是液态镜头（Liquid Lens） <i class="fa fa-chevron-right"></i>
+    <a href="/2019/01/01/using-gnome3-under-debian.html" rel="next" title="在Debian下使用Gnome3">
+      在Debian下使用Gnome3 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -384,7 +373,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E9%93%BE%E7%9A%84%E7%A7%8D%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">工具链的种类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E9%93%BE%E7%9A%84%E4%B8%8B%E8%BD%BD"><span class="nav-number">2.</span> <span class="nav-text">工具链的下载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E9%93%BE%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">3.</span> <span class="nav-text">工具链的安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%89%88%E6%9C%AC"><span class="nav-number">4.</span> <span class="nav-text">查看版本</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Samba"><span class="nav-number">1.</span> <span class="nav-text">安装Samba</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AESamba"><span class="nav-number">2.</span> <span class="nav-text">配置Samba</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%87%8D%E5%90%AFSamba%E6%9C%8D%E5%8A%A1"><span class="nav-number">3.</span> <span class="nav-text">重启Samba服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%86%E7%94%A8%E6%88%B7%E6%B7%BB%E5%8A%A0%E5%88%B0Samba"><span class="nav-number">4.</span> <span class="nav-text">将用户添加到Samba</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9C%A8Windows%E4%B8%8B%E8%AE%BF%E9%97%AESamba%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">在Windows下访问Samba服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E8%88%AC%E6%83%85%E5%86%B5%E4%B8%8B"><span class="nav-number">5.1.</span> <span class="nav-text">一般情况下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E6%83%85%E5%86%B5%E4%B8%8B"><span class="nav-number">5.2.</span> <span class="nav-text">特殊情况下</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -400,14 +389,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-count">37</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-count">38</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
@@ -530,9 +519,9 @@
 </script>
 <script>
   var disqus_config = function() {
-    this.page.url = "https://blog.colorfulshark.net/2021/01/30/install-cross-toolchain-for-arm.html";
-    this.page.identifier = "2021/01/30/install-cross-toolchain-for-arm.html";
-    this.page.title = "安装Arm交叉编译工具链";
+    this.page.url = "https://blog.colorfulshark.net/2018/12/30/configure-samba-server-under-debian.html";
+    this.page.identifier = "2018/12/30/configure-samba-server-under-debian.html";
+    this.page.title = "在Debian下配置Samba服务器";
     };
   NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
     if (window.DISQUS) {
