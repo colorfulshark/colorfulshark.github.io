@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在进行内核调试时， 最长使用的方式就是printk()，由于printk()被设计成可以在任何上下文（进程上下文、中断上下文）执行，因此它会在执行过程中带来较大的开销，尤其是所调试的代码对时间很敏感时，比如时间中断。而ftrace则能够在输出log的同时，最大程度上降低调试带来的开销。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Ftrace调试Linux内核">
+<meta property="og:url" content="https://blog.colorfulshark.net/2019/12/07/debug-kernel-with-ftrace.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="在进行内核调试时， 最长使用的方式就是printk()，由于printk()被设计成可以在任何上下文（进程上下文、中断上下文）执行，因此它会在执行过程中带来较大的开销，尤其是所调试的代码对时间很敏感时，比如时间中断。而ftrace则能够在输出log的同时，最大程度上降低调试带来的开销。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-12-07T02:43:01.000Z">
+<meta property="article:modified_time" content="2022-08-28T08:05:49.971Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="debug">
+<meta property="article:tag" content="ftrace">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2019/12/07/debug-kernel-with-ftrace.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2019/12/07/debug-kernel-with-ftrace.html","path":"2019/12/07/debug-kernel-with-ftrace.html","title":"使用Ftrace调试Linux内核"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用Ftrace调试Linux内核 | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">63</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEFtrace"><span class="nav-number">1.</span> <span class="nav-text">配置Ftrace</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-x2F-%E5%81%9C%E6%AD%A2tracing"><span class="nav-number">2.</span> <span class="nav-text">启动&#x2F;停止tracing</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4"><span class="nav-number">2.1.</span> <span class="nav-text">用户空间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4"><span class="nav-number">2.2.</span> <span class="nav-text">内核空间</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Tracers"><span class="nav-number">3.</span> <span class="nav-text">Tracers</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#function-tracer"><span class="nav-number">3.1.</span> <span class="nav-text">function tracer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#function-graph-tracer"><span class="nav-number">3.2.</span> <span class="nav-text">function_graph tracer</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E8%87%AA%E5%AE%9A%E4%B9%89log"><span class="nav-number">4.</span> <span class="nav-text">添加自定义log</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4-%E2%80%94%E2%80%94-trace-printk"><span class="nav-number">4.1.</span> <span class="nav-text">内核空间 —— trace_printk()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4-%E2%80%94%E2%80%94-trace-marker"><span class="nav-number">4.2.</span> <span class="nav-text">用户空间 —— trace_marker</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8Ftrace%E8%B0%83%E8%AF%95oops"><span class="nav-number">5.</span> <span class="nav-text">使用Ftrace调试oops</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8Ftrace%E8%B7%9F%E8%B8%AA%E6%A0%88%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">6.</span> <span class="nav-text">使用Ftrace跟踪栈的使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">8.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">63</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2019/12/07/debug-kernel-with-ftrace.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用Ftrace调试Linux内核 | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用Ftrace调试Linux内核
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-12-07 10:43:01" itemprop="dateCreated datePublished" datetime="2019-12-07T10:43:01+08:00">2019-12-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-08-28 16:05:49" itemprop="dateModified" datetime="2022-08-28T16:05:49+08:00">2022-08-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/debug/" itemprop="url" rel="index"><span itemprop="name">debug</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/12/07/debug-kernel-with-ftrace.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/12/07/debug-kernel-with-ftrace.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>在进行内核调试时， 最长使用的方式就是<code>printk()</code>，由于<code>printk()</code>被设计成可以在任何上下文（进程上下文、中断上下文）执行，因此它会在执行过程中带来较大的开销，尤其是所调试的代码对时间很敏感时，比如时间中断。而ftrace则能够在输出log的同时，最大程度上降低调试带来的开销。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="配置Ftrace"><a href="#配置Ftrace" class="headerlink" title="配置Ftrace"></a>配置Ftrace</h1><p>Ftrace的API接口位于DebugFS中，可以直接通过修改对应的文件来控制Ftrace，它们都位于</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/sys/kernel/debug/tracing</span><br></pre></td></tr></table></figure>
+
+<p>如果没有该目录，首先检查DebugFS是否挂载，如果没有可以手动挂载</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mount -v | grep debugfs</span><br><span class="line">mount -t debugfs debugfs /sys/kernel/debug</span><br></pre></td></tr></table></figure>
+
+<p>然后检查相关的内核选项是否开启</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">CONFIG_FUNCTION_TRACER</span><br><span class="line">CONFIG_FUNCTION_GRAPH_TRACER</span><br><span class="line">CONFIG_STACK_TRACER</span><br><span class="line">CONFIG_DYNAMIC_FTRACE</span><br></pre></td></tr></table></figure>
+
+<p>以下的操作都在该目录中进行。</p>
+<h1 id="启动-x2F-停止tracing"><a href="#启动-x2F-停止tracing" class="headerlink" title="启动&#x2F;停止tracing"></a>启动&#x2F;停止tracing</h1><p>开启Ftrace后虽然不会影响系统的功能，但是会对性能造成一定的影响，而且用于记录log的buffer空间有限，如果不及时停止，关键的数据就会被新数据覆盖。</p>
+<h2 id="用户空间"><a href="#用户空间" class="headerlink" title="用户空间"></a>用户空间</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">start tracing</span></span><br><span class="line">echo 1 &gt; tracing_on</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">stop tracing</span></span><br><span class="line">echo 0 &gt; tracing_on</span><br></pre></td></tr></table></figure>
+
+<h2 id="内核空间"><a href="#内核空间" class="headerlink" title="内核空间"></a>内核空间</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* start tracing */</span></span><br><span class="line">tracing_on();</span><br><span class="line"><span class="comment">/* stop tracing*/</span></span><br><span class="line">tracing_off();</span><br></pre></td></tr></table></figure>
+
+<h1 id="Tracers"><a href="#Tracers" class="headerlink" title="Tracers"></a>Tracers</h1><p>Ftrace提供了多种tracer，每种tracer都会以特定的格式记录PID、TIMESTAMP、FUNCTION等数据，同一时刻只能选择一种tracer。</p>
+<p>查看当前内核所支持的tracer</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat available_tracers</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hwlat blk mmiotrace function_graph wakeup_dl wakeup_rt wakeup function nop</span><br></pre></td></tr></table></figure>
+
+<p>要启用对应的tracer，直接将其名称echo到<code>current_tracer </code>中即可</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo function &gt; current_tracer</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>trace</code>文件可以直接读取抓取的log数据。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat trace</span><br></pre></td></tr></table></figure>
+
+<p>下面介绍几种常用的tracer</p>
+<h2 id="function-tracer"><a href="#function-tracer" class="headerlink" title="function tracer"></a>function tracer</h2><p>function tracer生成的log数据较为全面，但是对于函数的嵌套关系描述不是很直观。</p>
+<p>抓取的log格式如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">tracer: <span class="keyword">function</span></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment"># entries-in-buffer/entries-written: 410007/21079612   #P:8</span></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment">#                              _-----=&gt; irqs-off</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                            / _----=&gt; need-resched</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           | / _---=&gt; hardirq/softirq</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           || / _--=&gt; preempt-depth</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           ||| /     delay</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">          TASK-PID   CPU<span class="comment">#  ||||    TIMESTAMP  FUNCTION</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">             | |       |   ||||       |         |</span></span><br><span class="line">             awk-8215  [006] d... 17018.301564: __mod_zone_page_state &lt;-release_pages</span><br></pre></td></tr></table></figure>
+
+<p>第一函数是当前执行的函数，第二个是其调用者。</p>
+<h2 id="function-graph-tracer"><a href="#function-graph-tracer" class="headerlink" title="function_graph tracer"></a>function_graph tracer</h2><p>function_graph tracer很适合分析内核代码的执行路径，以及性能优化。</p>
+<p>抓取的log格式如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">tracer: function_graph</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment"># CPU  DURATION                  FUNCTION CALLS</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">|     |   |                     |   |   |   |</span></span><br><span class="line"> 6)   0.546 us    |                  get_mem_cgroup_from_mm();</span><br><span class="line"> 6)               |                  memcg_kmem_charge_memcg() &#123;</span><br><span class="line"> 6)   0.325 us    |                    try_charge();</span><br><span class="line"> 6)   0.331 us    |                    page_counter_try_charge();</span><br><span class="line"> 6)   1.551 us    |                  &#125;</span><br><span class="line"> 6)   3.050 us    |                &#125; /* memcg_kmem_charge */</span><br><span class="line"> 6)   7.527 us    |              &#125; /* __alloc_pages_nodemask */</span><br><span class="line"> 6) + 10.066 us   |            &#125; /* alloc_pages_current */</span><br><span class="line"> 6)   0.365 us    |            inc_zone_page_state();</span><br><span class="line"> 6) + 11.301 us   |          &#125; /* pte_alloc_one */</span><br><span class="line"> 6)               |          filemap_map_pages() &#123;</span><br><span class="line"> 6)               |            alloc_set_pte() &#123;</span><br></pre></td></tr></table></figure>
+
+<p>通过<strong>DURATION</strong>这一列可以看出每个函数的执行时间。</p>
+<p>如果超过10微秒，则在前面会有“**+**”</p>
+<p>如果超过100微秒，则在前面会有“**!**”</p>
+<h1 id="添加自定义log"><a href="#添加自定义log" class="headerlink" title="添加自定义log"></a>添加自定义log</h1><p>有时，内核自带的trace point可能无法满足我们需求，这时，我们可以添加额外的trace log，并让其与原本的log结合起来。</p>
+<h2 id="内核空间-——-trace-printk"><a href="#内核空间-——-trace-printk" class="headerlink" title="内核空间 —— trace_printk()"></a>内核空间 —— trace_printk()</h2><p>文章一开始就提到，虽然<code>printk()</code>使用起来简单，但是其开销较大，有时甚至会影响到我们对内核进行调试。</p>
+<p>比如在调试scheduler或者network这种非常忙碌的子系统时，<code>printk()</code>会极大地拖慢系统性能，甚至造成死锁；而在调试一些竞态问题时，使用<code>printk()</code>甚至会让问题“消失”，或者难以复现。</p>
+<p>而Ftrace提供的<code>trace_printk()</code>则可以用于这些调试场景，跟printk()一样，它也可以用于任何上下文中；不同的是，它不会把log输出到console，而是输出到一个独立的buffer。使用<code>trace_printk()</code>输出的log会与其它tracer输出的log结合。</p>
+<p>在内核模块中测试<code>trace_printk()</code>，模块代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/kernel.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/module.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br><span class="line">MODULE_AUTHOR(<span class="string">&quot;colorfulshark@hotmail.com&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">hello_kernel_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        tracing_on();</span><br><span class="line">        trace_printk(<span class="string">&quot;hello kernel\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">hello_kernel_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        trace_printk(<span class="string">&quot;goodbye kenrel\n&quot;</span>);</span><br><span class="line">        tracing_off();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(hello_kernel_init);</span><br><span class="line">module_exit(hello_kernel_exit);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>当使用<strong>nop&#x2F;function</strong>作为tracer时，输出的log如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">tracer: nop</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment"># entries-in-buffer/entries-written: 2/2   #P:8</span></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment">#                              _-----=&gt; irqs-off</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                            / _----=&gt; need-resched</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           | / _---=&gt; hardirq/softirq</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           || / _--=&gt; preempt-depth</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                           ||| /     delay</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">          TASK-PID   CPU<span class="comment">#  ||||    TIMESTAMP  FUNCTION</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">             | |       |   ||||       |         |</span></span><br><span class="line">          insmod-1442  [002] .... 23080.367994: 0xffffffffc044a005: hello kernel</span><br><span class="line">           rmmod-4353  [003] .... 23271.094110: 0xffffffffc044a025: goodbye kenrel</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>当使用<strong>function_graph</strong>作为tracer时，自定义的log会以类似注释的形式出现</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">tracer: function_graph</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"><span class="comment"># CPU  DURATION                  FUNCTION CALLS</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">|     |   |                     |   |   |   |</span></span><br><span class="line"> 5)               |  /* hello kernel */</span><br><span class="line"> 6)   1.430 us    |  _raw_spin_unlock_irqrestore();</span><br><span class="line"> 5)               |  blocking_notifier_call_chain() &#123;</span><br><span class="line"> 5)               |    down_read() &#123;</span><br><span class="line"> 5)               |      _cond_resched() &#123;</span><br><span class="line"> 5)   0.195 us    |        rcu_all_qs();</span><br><span class="line"> 5)   0.627 us    |      &#125;</span><br><span class="line"> [...]</span><br><span class="line"> 2)               |      0xffffffffc044a030() &#123;</span><br><span class="line"> 5)   0.235 us    |                  rcu_cblist_dequeue();</span><br><span class="line"> 2)               |        /* goodbye kenrel */</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="用户空间-——-trace-marker"><a href="#用户空间-——-trace-marker" class="headerlink" title="用户空间 —— trace_marker"></a>用户空间 —— trace_marker</h2><p>在调试用户空间程序时，我们可能会希望能够同步了解内核里的状态，虽然Ftrace输出的log有时间戳，但它跟墙钟并没有非常精确的对应关系，所以最好的解决方法是让用户空间的程序有能力把log输出到Ftrace的buffer中，从而与tracer输出的log结合。使用trace_marker这个文件即可实现这个功能。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &#x27;hello trace&#x27; &gt; trace_marker</span><br></pre></td></tr></table></figure>
+
+<p>其效果与在内核空间使用的<code>trace_printk()</code>相同。</p>
+<h1 id="使用Ftrace调试oops"><a href="#使用Ftrace调试oops" class="headerlink" title="使用Ftrace调试oops"></a>使用Ftrace调试oops</h1><p>当内核崩溃时，我们通常只能获得崩溃发生时的上下文信息，但是对于崩溃之前发生的事却所知甚少，通过使用<strong>ftrace_dump_on_oops</strong>，即可在内核发生崩溃时，将Ftrace buffer中的内容打印到console上。这对于揭示崩溃发生的原因可能起到至关重要的作用。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; ftrace_dump_on_oops</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>sysrq-z</code>可以手动触发这个过程，也可以直接在内核代码中使用<code>ftrace_dump()</code>来触发。</p>
+<h1 id="使用Ftrace跟踪栈的使用"><a href="#使用Ftrace跟踪栈的使用" class="headerlink" title="使用Ftrace跟踪栈的使用"></a>使用Ftrace跟踪栈的使用</h1><p>因为内核栈空间非常有限，分析内核函数对于栈空间的使用可以用于优化内核代码。</p>
+<p>要使用这个功能，首先要启动相应的内核选项</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CONFIG_STACK_TRACER</span><br></pre></td></tr></table></figure>
+
+<p>虽然这个tracer是基于function tracer开发的，但是它使用独立的buffer</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; /proc/sys/kernel/stack_tracer_enabled</span><br></pre></td></tr></table></figure>
+
+<p>如果需要从系统启动就开始记录栈的使用，将<code>stacktrace</code>加到内核的启动参数中即可。</p>
+<ul>
+<li><p>查看到目前为止被使用过的最大的栈</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat stack_max_size</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2728</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看每个函数使用的栈大小</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat stack_trace</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">      Depth    Size   Location    (15 entries)</span><br><span class="line">      -----    ----   --------</span><br><span class="line">0)     2840      64   __msecs_to_jiffies+0x5/0x30</span><br><span class="line">1)     2776      80   update_group_capacity+0x28/0x1f0</span><br><span class="line">2)     2696     384   find_busiest_group+0xff/0x9c0</span><br><span class="line">3)     2312     248   load_balance+0x164/0x9d0</span><br><span class="line">4)     2064     112   pick_next_task_fair+0x443/0x5b0</span><br><span class="line">5)     1952     104   __schedule+0x11e/0x880</span><br><span class="line">6)     1848      16   schedule+0x2c/0x80</span><br><span class="line">7)     1832     144   schedule_hrtimeout_range_clock+0x181/0x190</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Ftrace非常强大，但是通过DebugFS使用起来也非常复杂，以后会介绍基于Ftrace API接口的工具，比如trace-cmd，kernelshark，它们可以大大简化Ftrace的使用。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a target="_blank" rel="noopener" href="https://lwn.net/Articles/365835/">Debugging the kernel using Ftrace - part 1</a></p>
+<p><a target="_blank" rel="noopener" href="https://lwn.net/Articles/366796/">Debugging the kernel using Ftrace - part 2</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/trace/ftrace.txt">ftrace - Function Tracer</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/debug/" rel="tag"># debug</a>
+              <a href="/tags/ftrace/" rel="tag"># ftrace</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/11/09/swap-ctrl-and-caps-under-windows.html" rel="prev" title="修改Windows注册表交换Ctrl和Caps按键">
+                  <i class="fa fa-chevron-left"></i> 修改Windows注册表交换Ctrl和Caps按键
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/12/21/simplify-ftrace-with-tracecmd-and-kernelshark.html" rel="next" title="通过trace-cmd和kernelshark简化Ftrace的使用">
+                  通过trace-cmd和kernelshark简化Ftrace的使用 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

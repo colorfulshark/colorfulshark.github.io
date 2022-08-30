@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="随着MySQL的升级，其安装配置方式也变得越来越复杂，以至于新手第一次安装可能无法顺利地登录数据库，因此本文对如何在Ubuntu上安装配置MySQL进行简单阐述。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在Ubuntu上安装MySQL">
+<meta property="og:url" content="https://blog.colorfulshark.net/2019/12/28/install-mysql-on-ubuntu.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="随着MySQL的升级，其安装配置方式也变得越来越复杂，以至于新手第一次安装可能无法顺利地登录数据库，因此本文对如何在Ubuntu上安装配置MySQL进行简单阐述。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-12-28T07:44:00.000Z">
+<meta property="article:modified_time" content="2022-08-28T08:05:50.055Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="ubuntu">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2019/12/28/install-mysql-on-ubuntu.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2019/12/28/install-mysql-on-ubuntu.html","path":"2019/12/28/install-mysql-on-ubuntu.html","title":"在Ubuntu上安装MySQL"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>在Ubuntu上安装MySQL | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">63</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">系统环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85MySQL"><span class="nav-number">2.</span> <span class="nav-text">安装MySQL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEMySQL"><span class="nav-number">3.</span> <span class="nav-text">配置MySQL</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E6%A3%80%E6%9F%A5"><span class="nav-number">3.1.</span> <span class="nav-text">安全检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95root%E7%94%A8%E6%88%B7"><span class="nav-number">3.2.</span> <span class="nav-text">使用密码登录root用户</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%96%B0%E7%94%A8%E6%88%B7"><span class="nav-number">3.3.</span> <span class="nav-text">创建新用户</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95MySQL%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">4.</span> <span class="nav-text">测试MySQL数据库</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">63</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2019/12/28/install-mysql-on-ubuntu.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="在Ubuntu上安装MySQL | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在Ubuntu上安装MySQL
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-12-28 15:44:00" itemprop="dateCreated datePublished" datetime="2019-12-28T15:44:00+08:00">2019-12-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-08-28 16:05:50" itemprop="dateModified" datetime="2022-08-28T16:05:50+08:00">2022-08-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">环境配置</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/12/28/install-mysql-on-ubuntu.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/12/28/install-mysql-on-ubuntu.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>随着MySQL的升级，其安装配置方式也变得越来越复杂，以至于新手第一次安装可能无法顺利地登录数据库，因此本文对如何在Ubuntu上安装配置MySQL进行简单阐述。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="系统环境"><a href="#系统环境" class="headerlink" title="系统环境"></a>系统环境</h1><ul>
+<li>Ubuntu 18.04</li>
+<li>MySQL 5.7</li>
+</ul>
+<h1 id="安装MySQL"><a href="#安装MySQL" class="headerlink" title="安装MySQL"></a>安装MySQL</h1><p>直接从Ubuntu的软件源安装即可：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install mysql-server</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置MySQL"><a href="#配置MySQL" class="headerlink" title="配置MySQL"></a>配置MySQL</h1><h2 id="安全检查"><a href="#安全检查" class="headerlink" title="安全检查"></a>安全检查</h2><p>首次配置MySQL，我们最好进行一次安全检查，它会修改一些默认的不安全配置，比如禁止root用户远程登陆，以及删除一些用于测试的账户和数据库等。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mysql_secure_installation</span><br></pre></td></tr></table></figure>
+
+<p>它将会做以下几件事：</p>
+<ol>
+<li>安装密码检查插件，它会对密码强度进行检测，并拒绝低强度的密码</li>
+<li>设置root密码</li>
+<li>删除匿名用户</li>
+<li>禁止root用户远程登陆</li>
+<li>删除测试数据库</li>
+<li>重新加载权限配置</li>
+</ol>
+<h2 id="使用密码登录root用户"><a href="#使用密码登录root用户" class="headerlink" title="使用密码登录root用户"></a>使用密码登录root用户</h2><p>在MySQL 5.7中，root用户默认使用<code>auth_socket</code>进行身份验证，而不是使用密码。这样虽然可以在一定程度上提高安全性，但也增加了复杂性，尤其是当我们想要通过一些工具管理数据库时。要想使用密码登录root用户，需要将认证方式换成<code>mysql_native_password</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mysql</span><br></pre></td></tr></table></figure>
+
+<p>首先查看一下每个账户在使用哪种认证方式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SELECT user,authentication_string,plugin,host FROM mysql.user;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">| user             | authentication_string                     | plugin                | host      |</span><br><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">| root             |                                           | auth_socket           | localhost |</span><br><span class="line">| mysql.session    | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE | mysql_native_password | localhost |</span><br><span class="line">| mysql.sys        | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE | mysql_native_password | localhost |</span><br><span class="line">| debian-sys-maint | *06B203089FC724D1B1C4B9197F88991FB2D287B3 | mysql_native_password | localhost |</span><br><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">4 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>从查询结果可以看出，默认为root用户分配的认证方式就是<code>auth_socket</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; ALTER USER &#x27;root&#x27;@&#x27;localhost&#x27; IDENTIFIED WITH mysql_native_password BY &#x27;password&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>注意，这条命令会修改两个地方：</p>
+<ol>
+<li>root用户的认证方式修改为<code>mysql_native_password</code></li>
+<li>root用户的密码被设置为<code>password</code></li>
+</ol>
+<p>然后刷新MySQL的权限配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; FLUSH PRIVILEGES;</span><br></pre></td></tr></table></figure>
+
+<p>最后确认一下root用户的认证方式是否被修改</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SELECT user,authentication_string,plugin,host FROM mysql.user;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">| user             | authentication_string                     | plugin                | host      |</span><br><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">| root             | *84AAC12F54AB666ECFC2A83C676908C8BBC381B1 | mysql_native_password | localhost |</span><br><span class="line">| mysql.session    | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE | mysql_native_password | localhost |</span><br><span class="line">| mysql.sys        | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE | mysql_native_password | localhost |</span><br><span class="line">| debian-sys-maint | *06B203089FC724D1B1C4B9197F88991FB2D287B3 | mysql_native_password | localhost |</span><br><span class="line">+------------------+-------------------------------------------+-----------------------+-----------+</span><br><span class="line">4 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>之后，我们就可以使用密码登录root用户了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -u root -p</span><br></pre></td></tr></table></figure>
+
+<h2 id="创建新用户"><a href="#创建新用户" class="headerlink" title="创建新用户"></a>创建新用户</h2><p>创建用户并设置密码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; CREATE USER &#x27;sammy&#x27;@&#x27;localhost&#x27; IDENTIFIED BY &#x27;password&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>该命令创建了用户<code>sammy</code>并将其密码设置为<code>password</code>。</p>
+<p>对新用户授权</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; GRANT ALL PRIVILEGES ON *.* TO &#x27;sammy&#x27;@&#x27;localhost&#x27; WITH GRANT OPTION;</span><br></pre></td></tr></table></figure>
+
+<p>该命令授权<code>sammy</code>拥有所有数据库的所有表的所有权限，但仅限本地登录，如果希望能够远程登陆该用户，将<code>localhost</code>改为具体的<code>IP</code>，或者<code>%</code>表示任意IP。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; GRANT ALL PRIVILEGES ON *.* TO &#x27;sammy&#x27;@&#x27;%&#x27; WITH GRANT OPTION;</span><br></pre></td></tr></table></figure>
+
+<h1 id="测试MySQL数据库"><a href="#测试MySQL数据库" class="headerlink" title="测试MySQL数据库"></a>测试MySQL数据库</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqladmin -p -u root version</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">mysqladmin  Ver 8.42 Distrib 5.7.28, for Linux on x86_64</span><br><span class="line">Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.</span><br><span class="line"></span><br><span class="line">Oracle is a registered trademark of Oracle Corporation and/or its</span><br><span class="line">affiliates. Other names may be trademarks of their respective</span><br><span class="line">owners.</span><br><span class="line"></span><br><span class="line">Server version          5.7.28-0ubuntu0.18.04.4</span><br><span class="line">Protocol version        10</span><br><span class="line">Connection              Localhost via UNIX socket</span><br><span class="line">UNIX socket             /var/run/mysqld/mysqld.sock</span><br><span class="line">Uptime:                 4 hours 20 min 8 sec</span><br><span class="line"></span><br><span class="line">Threads: 3  Questions: 29  Slow queries: 0  Opens: 127  Flush tables: 1  Open tables: 120  Queries per second avg: 0.001</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a target="_blank" rel="noopener" href="https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-18-04">How To Install MySQL on Ubuntu 18.04</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ubuntu/" rel="tag"># ubuntu</a>
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/mysql/" rel="tag"># mysql</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/12/21/simplify-ftrace-with-tracecmd-and-kernelshark.html" rel="prev" title="通过trace-cmd和kernelshark简化Ftrace的使用">
+                  <i class="fa fa-chevron-left"></i> 通过trace-cmd和kernelshark简化Ftrace的使用
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/12/29/how-to-resize-ext4-filesystem.html" rel="next" title="在终端下调整ext4文件系统的大小">
+                  在终端下调整ext4文件系统的大小 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

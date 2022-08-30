@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="There are mainly two ways of storing multimedia: keeping them in client, or in server. For the later option, three softwares can be chose: Plex, Emby and Jellyfin. Today let’s talk about the last one">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Setup Jellyfin as Your Home Media Server">
+<meta property="og:url" content="https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="There are mainly two ways of storing multimedia: keeping them in client, or in server. For the later option, three softwares can be chose: Plex, Emby and Jellyfin. Today let’s talk about the last one">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server/jellyfin.png">
+<meta property="article:published_time" content="2022-02-27T03:26:55.000Z">
+<meta property="article:modified_time" content="2022-08-28T08:05:50.083Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="jellyfin">
+<meta property="article:tag" content="media">
+<meta property="article:tag" content="server">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server/jellyfin.png">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server.html","path":"2022/02/27/setup-jellyfin-as-home-media-server.html","title":"Setup Jellyfin as Your Home Media Server"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Setup Jellyfin as Your Home Media Server | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">63</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Background"><span class="nav-number">1.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Installation"><span class="nav-number">2.</span> <span class="nav-text">Installation</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Configuration"><span class="nav-number">3.</span> <span class="nav-text">Configuration</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx"><span class="nav-number">3.1.</span> <span class="nav-text">Nginx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hardware-Acceleration"><span class="nav-number">3.2.</span> <span class="nav-text">Hardware Acceleration</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">63</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2022/02/27/setup-jellyfin-as-home-media-server.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Setup Jellyfin as Your Home Media Server | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Setup Jellyfin as Your Home Media Server
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2022-02-27 11:26:55" itemprop="dateCreated datePublished" datetime="2022-02-27T11:26:55+08:00">2022-02-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-08-28 16:05:50" itemprop="dateModified" datetime="2022-08-28T16:05:50+08:00">2022-08-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Geek/" itemprop="url" rel="index"><span itemprop="name">Geek</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2022/02/27/setup-jellyfin-as-home-media-server.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2022/02/27/setup-jellyfin-as-home-media-server.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>There are mainly two ways of storing multimedia: keeping them in client, or in server. For the later option, three softwares can be chose: Plex, Emby and Jellyfin. Today let’s talk about the last one —— Jellyfin.</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h1><p>We choose Jellyfin because it’s the only open source solution. Actually, Emby used to be open source as well, but after the company decided to close source, some developer were get annoyed and launched the opensource version of Emby, that’s Jellyfin.</p>
+<p>The main page of Jellyfin is as bellow</p>
+<img src="/2022/02/27/setup-jellyfin-as-home-media-server/jellyfin.png" class="">
+
+<h1 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h1><p>I will try to install Jelyfin on Ubuntu, but it also supports a bunch of platforms, such as Windows, Mac and Android.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install apt-transport-https</span><br><span class="line">wget -O - https://repo.jellyfin.org/jellyfin_team.gpg.key | sudo apt-key add -</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;deb [arch=<span class="subst">$( dpkg --print-architecture )</span>] https://repo.jellyfin.org/<span class="subst">$( awk -F&#x27;=&#x27; &#x27;/^ID=/&#123; print $NF &#125;&#x27; /etc/os-release )</span> <span class="subst">$( awk -F&#x27;=&#x27; &#x27;/^VERSION_CODENAME=/&#123; print $NF &#125;&#x27; /etc/os-release )</span> main&quot;</span> | sudo <span class="built_in">tee</span> /etc/apt/sources.list.d/jellyfin.list</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install jellyfin</span><br></pre></td></tr></table></figure>
+
+<p>Now you can access the server through <code>http://your_local_IP_address:8096</code> to finish the initial setup.</p>
+<h1 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h1><h2 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h2><p>If your server has public IP address, you may want to access Jellyfin through domain rather than IP:Port.</p>
+<p>And normally a server will run multi service simultaneously, then you will need a reverse proxy to route different domain to the related service. Here I will take Nginx as example.</p>
+<p>The default config will only use <code>http</code> as the lack of TLS cert. Your can uncomment the related line to enable <code>https</code> to increase security.</p>
+<p><code>/etc/nginx/conf.d/jellyfin.conf</code></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Uncomment the commented sections after you have acquired a SSL Certificate</span></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">listen</span> [::]:<span class="number">80</span>;</span><br><span class="line">    <span class="comment"># server_name DOMAIN_NAME;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># Uncomment to redirect HTTP to HTTPS</span></span><br><span class="line">    <span class="comment"># return 301 https://$host$request_uri;</span></span><br><span class="line"><span class="comment">#&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#server &#123;</span></span><br><span class="line">    <span class="comment"># listen 443 ssl http2;</span></span><br><span class="line">    <span class="comment"># listen [::]:443 ssl http2;</span></span><br><span class="line">    <span class="attribute">server_name</span> DOMAIN_NAME;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># use a variable to store the upstream proxy</span></span><br><span class="line">    <span class="comment"># in this example we are using a hostname which is resolved via DNS</span></span><br><span class="line">    <span class="comment"># (if you aren&#x27;t using DNS remove the resolver line and change the variable to point to an IP address e.g `set $jellyfin 127.0.0.1`)</span></span><br><span class="line">    <span class="attribute">set</span> <span class="variable">$jellyfin</span> jellyfin;</span><br><span class="line">    <span class="attribute">resolver</span> <span class="number">127.0.0.1</span> valid=<span class="number">30</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">#ssl_certificate /etc/letsencrypt/live/DOMAIN_NAME/fullchain.pem;</span></span><br><span class="line">    <span class="comment">#ssl_certificate_key /etc/letsencrypt/live/DOMAIN_NAME/privkey.pem;</span></span><br><span class="line">    <span class="comment">#include /etc/letsencrypt/options-ssl-nginx.conf;</span></span><br><span class="line">    <span class="comment">#ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;</span></span><br><span class="line">    <span class="comment">#add_header Strict-Transport-Security &quot;max-age=31536000&quot; always;</span></span><br><span class="line">    <span class="comment">#ssl_trusted_certificate /etc/letsencrypt/live/DOMAIN_NAME/chain.pem;</span></span><br><span class="line">    <span class="comment">#ssl_stapling on;</span></span><br><span class="line">    <span class="comment">#ssl_stapling_verify on;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># Security / XSS Mitigation Headers</span></span><br><span class="line">    <span class="attribute">add_header</span> X-Frame-Options <span class="string">&quot;SAMEORIGIN&quot;</span>;</span><br><span class="line">    <span class="attribute">add_header</span> X-XSS-Protection <span class="string">&quot;1; mode=block&quot;</span>;</span><br><span class="line">    <span class="attribute">add_header</span> X-Content-Type-Options <span class="string">&quot;nosniff&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Content Security Policy</span></span><br><span class="line">    <span class="comment"># See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP</span></span><br><span class="line">    <span class="comment"># Enforces https content and restricts JS/CSS to origin</span></span><br><span class="line">    <span class="comment"># External Javascript (such as cast_sender.js for Chromecast) must be whitelisted.</span></span><br><span class="line">    <span class="comment">#add_header Content-Security-Policy &quot;default-src https: data: blob: http://image.tmdb.org; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; script-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://www.gstatic.com/cv/js/sender/v1/cast_sender.js https://www.gstatic.com/eureka/clank/95/cast_sender.js https://www.gstatic.com/eureka/clank/96/cast_sender.js https://www.gstatic.com/eureka/clank/97/cast_sender.js https://www.youtube.com blob:; worker-src &#x27;self&#x27; blob:; connect-src &#x27;self&#x27;; object-src &#x27;none&#x27;; frame-ancestors &#x27;self&#x27;&quot;;</span></span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> = / &#123;</span><br><span class="line">        <span class="attribute">return</span> <span class="number">302</span> http://<span class="variable">$host</span>/web/;</span><br><span class="line">        <span class="comment">#return 302 https://$host/web/;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> / &#123;</span><br><span class="line">        <span class="comment"># Proxy main Jellyfin traffic</span></span><br><span class="line">        <span class="attribute">proxy_pass</span> http://<span class="variable">$jellyfin</span>:8096;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Protocol <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Host <span class="variable">$http_host</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Disable buffering when the nginx proxy gets very resource heavy upon streaming</span></span><br><span class="line">        <span class="attribute">proxy_buffering</span> <span class="literal">off</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># location block for /web - This is purely for aesthetics so /web/#!/ works instead of having to go to /web/index.html/#!/</span></span><br><span class="line">    <span class="section">location</span> = /web/ &#123;</span><br><span class="line">        <span class="comment"># Proxy main Jellyfin traffic</span></span><br><span class="line">        <span class="attribute">proxy_pass</span> http://<span class="variable">$jellyfin</span>:8096/web/index.html;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Protocol <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Host <span class="variable">$http_host</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> /socket &#123;</span><br><span class="line">        <span class="comment"># Proxy Jellyfin Websockets traffic</span></span><br><span class="line">        <span class="attribute">proxy_pass</span> http://<span class="variable">$jellyfin</span>:8096;</span><br><span class="line">        <span class="attribute">proxy_http_version</span> <span class="number">1</span>.<span class="number">1</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Upgrade <span class="variable">$http_upgrade</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Connection <span class="string">&quot;upgrade&quot;</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Protocol <span class="variable">$scheme</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Host <span class="variable">$http_host</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Hardware-Acceleration"><a href="#Hardware-Acceleration" class="headerlink" title="Hardware Acceleration"></a>Hardware Acceleration</h2><p>Media server is not exactly like the file sharing server, such as samba. As the media files will be decoded on server side rather than client side.</p>
+<p>This patten can be usefule when the media file can not be decoded by client. For example, Chrome can not play HEVC video. And when it happens, the server will transcode the file to a format which can be decoded by client. This process includes two routines: Decoding and Encoding.</p>
+<p>Of cource these two works can be done by CPU, but as we know, CPU is not the perfect role to play such tasks, they should belong to the GPU. Then we need to enable GPU acceleration.</p>
+<p>I will take Intel Quick Sync Video (QSV) as example because nearly most of home-based NAS are equipped with Intel CPU.</p>
+<ul>
+<li><p><strong>Install VAAPI driver</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install gpg-agent wget</span><br><span class="line">wget -qO - https://repositories.intel.com/graphics/intel-graphics.key | sudo apt-key add -</span><br><span class="line">sudo bash -c <span class="string">&quot;echo &#x27;deb [arch=amd64] https://repositories.intel.com/graphics/ubuntu focal main&#x27; &gt;&gt; /etc/apt/sources.list&quot;</span></span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install intel-media-va-driver-non-free</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Add group</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo usermod -aG render jellyfin</span><br><span class="line">sudo systemctl restart jellyfin</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Check VA info</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/lib/jellyfin-ffmpeg/vainfo</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Configure QSV acceleration</strong></p>
+<p>Go to <code>Dashboard -&gt; Playback -&gt; Transcoding</code>, select <code>Intel Quick Sync</code>, and click <code>Save</code>.</p>
+</li>
+<li><p><strong>Check GPU Usage</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install intel-gpu-tools</span><br><span class="line">sudo intel_gpu_top</span><br></pre></td></tr></table></figure>
+
+<p>Play a HEVC video on Chrome, then check if there’s any GPU usage shown up.</p>
+</li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><p><a target="_blank" rel="noopener" href="https://jellyfin.org/downloads/">Downloads - Jellyfin: The Free Software Media System</a></p>
+<p><a target="_blank" rel="noopener" href="https://jellyfin.org/docs/">Home | Documentation - Jellyfin Project</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/Intel-Media-SDK/MediaSDK/wiki/Intel-media-stack-on-Ubuntu">Intel media stack on Ubuntu · Intel-Media-SDK&#x2F;MediaSDK Wiki · GitHub</a></p>
+<p><a target="_blank" rel="noopener" href="https://askubuntu.com/questions/387594/how-to-measure-gpu-usage">software recommendation - How to measure GPU usage? - Ask Ubuntu</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/linuxserver/docker-jellyfin/issues/96#issuecomment-789768141">linuxserver&#x2F;jellyfin:10.6.4-1-ls96 broke Intel Quicksync (most likely due to jellyfin-ffmpeg4.3.1-4-focal) · Issue #96 · linuxserver&#x2F;docker-jellyfin · GitHub</a></p>
+<p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/Hardware_video_acceleration">Hardware video acceleration - ArchWiki</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/jellyfin/" rel="tag"># jellyfin</a>
+              <a href="/tags/media/" rel="tag"># media</a>
+              <a href="/tags/server/" rel="tag"># server</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/02/06/hack-chinaunicom-optical-modem.html" rel="prev" title="Hack China Unicom Optical Modem">
+                  <i class="fa fa-chevron-left"></i> Hack China Unicom Optical Modem
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/06/03/remote-access-to-plex-via-ipv6.html" rel="next" title="Remote Access to Plex via IPv6">
+                  Remote Access to Plex via IPv6 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

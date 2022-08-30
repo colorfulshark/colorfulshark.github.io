@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="让树莓派进行wifi中继，最简单的方式是安装OpenWrt或者LEDE，然后通过Luci界面可以方便的进行操作，前提是你的无线网卡能够在OpenWrt下顺利驱动。由于我需要中继5G信号，所以选购了一款支持双频的USB无线网卡，主控为RTL8812AU，Realtek实际上间接提供了Linux下网卡驱动的源码，在Github上可以搜索到很多，但是无奈这个驱动交叉编译完成后insmod到OpenWr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="将树莓派打造为无线中继">
+<meta property="og:url" content="https://blog.colorfulshark.net/2018/01/06/build-wireless-bridge-with-raspberry-pi.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="让树莓派进行wifi中继，最简单的方式是安装OpenWrt或者LEDE，然后通过Luci界面可以方便的进行操作，前提是你的无线网卡能够在OpenWrt下顺利驱动。由于我需要中继5G信号，所以选购了一款支持双频的USB无线网卡，主控为RTL8812AU，Realtek实际上间接提供了Linux下网卡驱动的源码，在Github上可以搜索到很多，但是无奈这个驱动交叉编译完成后insmod到OpenWr">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-01-05T16:25:19.000Z">
+<meta property="article:modified_time" content="2022-08-28T08:05:49.971Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="raspberrypi">
+<meta property="article:tag" content="wireless">
+<meta property="article:tag" content="bridge">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2018/01/06/build-wireless-bridge-with-raspberry-pi.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2018/01/06/build-wireless-bridge-with-raspberry-pi.html","path":"2018/01/06/build-wireless-bridge-with-raspberry-pi.html","title":"将树莓派打造为无线中继"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>将树莓派打造为无线中继 | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">63</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">准备工作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%BD%91%E6%A1%A5"><span class="nav-number">2.</span> <span class="nav-text">配置网桥</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEIP%E8%BD%AC%E5%8F%91"><span class="nav-number">3.</span> <span class="nav-text">配置IP转发</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">第一种方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.2.</span> <span class="nav-text">第二种方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.3.</span> <span class="nav-text">第三种方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEiptables"><span class="nav-number">4.</span> <span class="nav-text">配置iptables</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85DHCP-x2F-DNS%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">安装DHCP&#x2F;DNS服务器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9C%A8%E6%A0%91%E8%8E%93%E6%B4%BE%E4%B8%8A%E8%BF%9E%E6%8E%A5WiFi"><span class="nav-number">6.</span> <span class="nav-text">在树莓派上连接WiFi</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E7%BB%AD"><span class="nav-number">7.</span> <span class="nav-text">后续</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">63</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2018/01/06/build-wireless-bridge-with-raspberry-pi.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="将树莓派打造为无线中继 | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          将树莓派打造为无线中继
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2018-01-06 00:25:19" itemprop="dateCreated datePublished" datetime="2018-01-06T00:25:19+08:00">2018-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-08-28 16:05:49" itemprop="dateModified" datetime="2022-08-28T16:05:49+08:00">2022-08-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%BC%80%E5%8F%91%E6%9D%BF/" itemprop="url" rel="index"><span itemprop="name">开发板</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%BC%80%E5%8F%91%E6%9D%BF/%E6%A0%91%E8%8E%93%E6%B4%BE/" itemprop="url" rel="index"><span itemprop="name">树莓派</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/01/06/build-wireless-bridge-with-raspberry-pi.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/01/06/build-wireless-bridge-with-raspberry-pi.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>让树莓派进行wifi中继，最简单的方式是安装OpenWrt或者LEDE，然后通过Luci界面可以方便的进行操作，前提是你的无线网卡能够在OpenWrt下顺利驱动。<br>由于我需要中继5G信号，所以选购了一款支持双频的USB无线网卡，主控为RTL8812AU，Realtek实际上间接提供了Linux下网卡驱动的源码，在Github上可以搜索到很多，但是无奈这个驱动交叉编译完成后insmod到OpenWrt和LEDE并不能很好的驱动网卡，无奈之下只好使用Raspbian，通过相关配置来完成需求。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><ul>
+<li>已经安装完Raspbian的树莓派，且能够通过串口、SSH或者显示器登陆</li>
+<li>网线</li>
+<li>电脑</li>
+</ul>
+<p>这里我假设你已经在树莓派上安装好了系统，因为树莓派安装系统并不复杂，所以这里不过多赘述。</p>
+<h1 id="配置网桥"><a href="#配置网桥" class="headerlink" title="配置网桥"></a>配置网桥</h1><p>可能很多人会不解：添加网桥的作用是什么，通过树莓派的以太网口不是已经可以很好的通信了吗？<br>不知道你有没有想过一个问题，为什么你把网线插到路由器上随便一个lan口，都可以ping通192.168.1.1（假设你的网关是这个），那几个lan口也有IP吗？路由器的lan口到底有什么特殊之处？<br>学过计算机网络的童鞋应该知道，网桥是一个工作在二层的设备，目的是分离不同的碰撞域，设备之间直接通过mac地址通信。<br>在Linux系统中，假设我们有4个以太网卡，一个网桥，并且将这4个以太网卡设置为网桥的4个接口，同时将网卡设置为混杂模式，那么我们就得到了一个虚拟的网桥设备，如果再为网桥设置一个IP，那么这个网桥就是传说中的lan了。<br>实际上基于Linux系统的路由器正是这么做的，在OpenWrt的终端下使用ifconfig命令可以看到一个br-lan的接口，那就是虚拟网桥。</p>
+<p>明白了原理，接下来只要知道如何创建网桥并分配接口，配置IP就行了，首先需要安装网桥配置工具：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install bridge-utils</span><br></pre></td></tr></table></figure>
+
+<p>然后输入如下命令，即可完成配置，更详细的使用方法可以参考man手册。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">brctl addbr br-lan</span><br><span class="line">brctl addif br-lan eth0</span><br><span class="line">ifconfig br-lan 192.168.1.1 up</span><br><span class="line">ifconfig eth0 0.0.0.0 up</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置IP转发"><a href="#配置IP转发" class="headerlink" title="配置IP转发"></a>配置IP转发</h1><p>一般的Linux发行版默认都不会开启ip_forward，因为正常的计算机都是作为终端，没有转发数据报的需求，因此需要手动打开。</p>
+<h2 id="第一种方式"><a href="#第一种方式" class="headerlink" title="第一种方式"></a>第一种方式</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br></pre></td></tr></table></figure>
+
+<h2 id="第二种方式"><a href="#第二种方式" class="headerlink" title="第二种方式"></a>第二种方式</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/sysctl.conf</span><br><span class="line">+ net.ipv4.ip_forward = 1</span><br></pre></td></tr></table></figure>
+
+<h2 id="第三种方式"><a href="#第三种方式" class="headerlink" title="第三种方式"></a>第三种方式</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl net.ipv4.ip_forward = 1</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置iptables"><a href="#配置iptables" class="headerlink" title="配置iptables"></a>配置iptables</h1><p>如果我们中继的是运营商的wifi，那么可能会获得一个公网的IP，这种情况下想让内网的所有设备共享这一个公网IP，需要在wlan0网口启用nat。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<h1 id="安装DHCP-x2F-DNS服务器"><a href="#安装DHCP-x2F-DNS服务器" class="headerlink" title="安装DHCP&#x2F;DNS服务器"></a>安装DHCP&#x2F;DNS服务器</h1><p>作为一台准路由器，插在上面的设备最好能够自动获取IP，这里我选用的是dnsmasq，因为科学上网比较方便。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">apt install dnsmasq</span><br><span class="line">vim /etc/dnsmasq.conf</span><br><span class="line">+ dhcp-range=192.168.1.50,192.168.1.150,255.255.255.0,12h</span><br></pre></td></tr></table></figure>
+
+<p>dnsmasq的功能很强大，这里我仅仅使用了基础的DNS&#x2F;DHCP功能，你也可以根据自己的需求定制。</p>
+<h1 id="在树莓派上连接WiFi"><a href="#在树莓派上连接WiFi" class="headerlink" title="在树莓派上连接WiFi"></a>在树莓派上连接WiFi</h1><p>通过图形界面连接wifi难度不大，这里主要说一下通过命令行连接wpa&#x2F;wpa2加密的wifi。<br>在Linux发行版中，一般都会集成一套wireless-tools，但是在树莓派中，同时还提供了wpa_supplicant，它基于C&#x2F;S模型，我们需要使用wpa_cli来和wpa_supplicant通信，完成相关设置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wpa_cli</span><br></pre></td></tr></table></figure>
+<p>然后会出现下面这样的命令行界面</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">wpa_cli v2.4</span><br><span class="line">Copyright (c) 2004-2015, Jouni Malinen &lt;j@w1.fi&gt; and contributors</span><br><span class="line"></span><br><span class="line">This software may be distributed under the terms of the BSD license.</span><br><span class="line">See README for more details.</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Selected interface &#x27;wlan0&#x27;</span><br><span class="line"></span><br><span class="line">Interactive mode</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>既然是命令行，就可以敲命令，首先扫描一下wifi</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scan</span><br></pre></td></tr></table></figure>
+
+<p>然后读取一下扫描的结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scan_result</span><br></pre></td></tr></table></figure>
+
+<p>当看到你需要中继的wifi的SSID后，记下来，然后新建一个空网络</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add_network</span><br></pre></td></tr></table></figure>
+
+<p>此时会显示新建的网络的编号，如果没看清，可以查看一下当前所有配置过的热点信息</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">list_network</span><br></pre></td></tr></table></figure>
+
+<p>下面我们需要配置网络了，假设新建的网络编号为0</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set_network 0 ssid &quot;OpenWrt&quot;</span><br><span class="line">set_network 0 psk &quot;1234567890&quot;</span><br></pre></td></tr></table></figure>
+
+<p>最后选择一个网络进行连接</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select_network 0</span><br></pre></td></tr></table></figure>
+
+<p>如果正常的话，就可以连接成功，可以查看当前状态</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">status</span><br></pre></td></tr></table></figure>
+
+<h1 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h1><p>此时，将无线路由器的wan口与树莓派的lan口连接，并设置为自动获取IP，就可以上网了。<br>这样可以将中继的接收方与发送方通过网线连接，因此灵活性更高，前提是你能给树莓派找到一个不会被偷的地方(¬､¬)</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/raspberrypi/" rel="tag"># raspberrypi</a>
+              <a href="/tags/wireless/" rel="tag"># wireless</a>
+              <a href="/tags/bridge/" rel="tag"># bridge</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2018/04/30/a33-flash-firmware-under-ubuntu.html" rel="next" title="在Ubuntu（Debian）下烧写全志A33系统镜像">
+                  在Ubuntu（Debian）下烧写全志A33系统镜像 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

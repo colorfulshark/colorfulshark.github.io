@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="作为Linux内核工程师，QEMU是日常工作中经常接触的一个虚拟化工具，通过其CPU以及外设的模拟能力，我们很容易搭建出一套用于测试或开发的虚拟环境。以前在使用时通常都是直接去引导内核，但其实QEMU并不只是能够引导内核，任何拥有硬件初始化和管理能力的二进制程序它都可以引导运行。今天我们就使用qemu引导uboot，并在uboot中启动内核。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在QEMU中启动U-Boot和内核">
+<meta property="og:url" content="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="作为Linux内核工程师，QEMU是日常工作中经常接触的一个虚拟化工具，通过其CPU以及外设的模拟能力，我们很容易搭建出一套用于测试或开发的虚拟环境。以前在使用时通常都是直接去引导内核，但其实QEMU并不只是能够引导内核，任何拥有硬件初始化和管理能力的二进制程序它都可以引导运行。今天我们就使用qemu引导uboot，并在uboot中启动内核。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-01-30T08:08:29.000Z">
+<meta property="article:modified_time" content="2022-08-28T08:05:49.971Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="qemu">
+<meta property="article:tag" content="uboot">
+<meta property="article:tag" content="kernel">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html","path":"2021/01/30/boot-kernel-in-uboot-from-qemu.html","title":"在QEMU中启动U-Boot和内核"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>在QEMU中启动U-Boot和内核 | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">63</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8U-Boot"><span class="nav-number">1.</span> <span class="nav-text">为什么要使用U-Boot</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85QEMU"><span class="nav-number">2.</span> <span class="nav-text">安装QEMU</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">3.</span> <span class="nav-text">安装交叉编译器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91U-Boot"><span class="nav-number">4.</span> <span class="nav-text">编译U-Boot</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E6%BA%90%E7%A0%81"><span class="nav-number">4.1.</span> <span class="nav-text">下载源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">4.2.</span> <span class="nav-text">编译</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">5.</span> <span class="nav-text">编译文件系统</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E6%BA%90%E7%A0%81-1"><span class="nav-number">5.1.</span> <span class="nav-text">下载源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">5.2.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91-1"><span class="nav-number">5.3.</span> <span class="nav-text">编译</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%86%85%E6%A0%B8"><span class="nav-number">6.</span> <span class="nav-text">编译内核</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E6%BA%90%E7%A0%81-2"><span class="nav-number">6.1.</span> <span class="nav-text">下载源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-1"><span class="nav-number">6.2.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91-2"><span class="nav-number">6.3.</span> <span class="nav-text">编译</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8QEMU"><span class="nav-number">7.</span> <span class="nav-text">启动QEMU</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">63</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="在QEMU中启动U-Boot和内核 | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在QEMU中启动U-Boot和内核
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-01-30 16:08:29" itemprop="dateCreated datePublished" datetime="2021-01-30T16:08:29+08:00">2021-01-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-08-28 16:05:49" itemprop="dateModified" datetime="2022-08-28T16:05:49+08:00">2022-08-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" itemprop="url" rel="index"><span itemprop="name">环境搭建</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/" itemprop="url" rel="index"><span itemprop="name">虚拟化</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/qemu/" itemprop="url" rel="index"><span itemprop="name">qemu</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2021/01/30/boot-kernel-in-uboot-from-qemu.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/01/30/boot-kernel-in-uboot-from-qemu.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>作为Linux内核工程师，QEMU是日常工作中经常接触的一个虚拟化工具，通过其CPU以及外设的模拟能力，我们很容易搭建出一套用于测试或开发的虚拟环境。以前在使用时通常都是直接去引导内核，但其实QEMU并不只是能够引导内核，任何拥有硬件初始化和管理能力的二进制程序它都可以引导运行。今天我们就使用qemu引导uboot，并在uboot中启动内核。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="为什么要使用U-Boot"><a href="#为什么要使用U-Boot" class="headerlink" title="为什么要使用U-Boot"></a>为什么要使用U-Boot</h1><p>既然QEMU本身就具备引导Linux内核的功能，我们为什么还要先引导U-Boot呢？我想主要有一下几点好处：</p>
+<ul>
+<li>U-Boot能够提供更灵活的内核引导方式，它不仅可以从本地获取内核文件，还能通过网络获取</li>
+<li>U-Boot可以提供更完整的调试环境，如果直接使用QEMU，我们就很难看到bootloader做了哪些事情</li>
+<li>对于嵌入式系统的学习，U-Boot也是重要的一环，因此了解其工作原理有时也很重要</li>
+<li>对于跨平台模拟，如Arm，当涉及到DTB加载和引导压缩内核镜像的时候，QEMU有时并不能正确处理</li>
+</ul>
+<h1 id="安装QEMU"><a href="#安装QEMU" class="headerlink" title="安装QEMU"></a>安装QEMU</h1><p>QEMU在主流的发行版中都可以直接从源上下载安装。</p>
+<ul>
+<li><strong>Arch:</strong> <code>pacman -S qemu</code></li>
+<li><strong>Debian&#x2F;Ubuntu:</strong> <code>apt-get install qemu</code></li>
+<li><strong>Fedora:</strong> <code>dnf install @virtualization</code></li>
+<li><strong>Gentoo:</strong> <code>emerge --ask app-emulation/qemu</code></li>
+<li><strong>RHEL&#x2F;CentOS:</strong> <code>yum install qemu-kvm</code></li>
+<li><strong>SUSE:</strong> <code>zypper install qemu</code></li>
+</ul>
+<p>当然也可以从源码编译安装，参考QEMU网站的<a target="_blank" rel="noopener" href="https://www.qemu.org/download/#source">Build instructions</a>。</p>
+<p>QEMU为每一种Arch生成一个对应的可执行程序，我们主要关注以下两个程序：</p>
+<ul>
+<li><p><strong>qemu-system-arm</strong>: 模拟32位Arm CPU，如Arm9&#x2F;Arm11、Cortex-A7&#x2F;A9&#x2F;A15</p>
+</li>
+<li><p><strong>qemu-system-aarch64</strong>: 模拟64位Arm CPU，如Cortex-A53&#x2F;A57</p>
+</li>
+</ul>
+<p>可以通过<code>qemu-system-arm -machine help</code>来查看支持哪些开发板的模拟。</p>
+<p>这里我们使用 vexpress-a9 这款开发板。vexpress-a9 是 Arm 公司自己设计的一款 4 核 Cortex-A9 开发板，U-Boot、Linux Kernel 和 QEMU 对这款开发板都做了完整的支持。</p>
+<h1 id="安装交叉编译器"><a href="#安装交叉编译器" class="headerlink" title="安装交叉编译器"></a>安装交叉编译器</h1><p>请参照这篇文章安装所需的交叉编译工具链：</p>
+<p><a href="https://blog.colorfulshark.net/2021/01/30/install-cross-toolchain-for-arm.html">《安装Arm交叉编译工具链》</a></p>
+<h1 id="编译U-Boot"><a href="#编译U-Boot" class="headerlink" title="编译U-Boot"></a>编译U-Boot</h1><h2 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://gitlab.denx.de/u-boot/u-boot.git</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make vexpress_ca9x4_defconfig</span><br><span class="line">make CROSS_COMPILE=arm-linux-gnueabihf- all</span><br></pre></td></tr></table></figure>
+
+<p>最终编译生成ELF格式的可执行文件 u-boot 和纯二进制文件u-boot.bin，其中 QEMU 可以启动的为ELF格式的可执行文件 u-boot。</p>
+<h1 id="编译文件系统"><a href="#编译文件系统" class="headerlink" title="编译文件系统"></a>编译文件系统</h1><p>这里我们使用Buildroot来快速构建一个我们需要的文件系统。</p>
+<h2 id="下载源码-1"><a href="#下载源码-1" class="headerlink" title="下载源码"></a>下载源码</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone git://git.buildroot.net/buildroot</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>首先进入menuconfig：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make menuconfig</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p><strong>Target options</strong></p>
+<ul>
+<li><p>Target Architecture: <code>ARM (little endian)</code></p>
+<p>大部分 Arm 都是小端模式，所以选上<strong>little endian</strong>。</p>
+</li>
+<li><p>Target Architecture Variant: <code>cortex-A9</code></p>
+<p>这款开发板的 CPU 是 cortex-A9。</p>
+</li>
+<li><p>Enable VFP extension support: <code>enable</code></p>
+</li>
+<li><p>Target ABI: <code>EABIhf</code></p>
+<p>我们将使用Linaro GCC进行编译，Linaro的GCC默认都打开了hardfloat的支持，所以选上<strong>VFP extension和EABIhf</strong>。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Build options</strong></p>
+<ul>
+<li><p>Location to save buildroot config: <code>ca9_mini_defconfig</code></p>
+<p>该选项是设置最后生成的配置文件的保存路径，buildroot可以针对不同的板子生成特定的defconfig文件，默认保存在configs目录下。自己修改各项配置后，执行make savedefconfig命令，就会生成新的defconfig文件。下次编译之前，可以直接执行<code>make ca9_mini_defconfig</code>命令来加载已有的配置。</p>
+</li>
+<li><p>Download dir</p>
+<p>该选项设置 buildroot 下载的各种第三方包的存储路径，默认在 dl 目录下。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Toolchain</strong></p>
+<ul>
+<li><p>Toolchain type: <code>External toolchain</code></p>
+</li>
+<li><p>Toolchain: <code>Custom toolchain</code></p>
+<p>因为这里使用电脑上自己安装的toolchain，所以我们这里选<strong>External toolchain</strong>和<strong>Custom toolchain</strong>。</p>
+</li>
+<li><p>Toolchain path: <code>/usr/local/toolchain/gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf</code></p>
+<p>然后在<strong>Toolchain path</strong>中填写toolchian在电脑上安装的位置。</p>
+</li>
+<li><p>Toolchain prefix: <code>$(ARCH)-none-linux-gnueabihf</code></p>
+<p>另外要注意<strong>Toolchain prefix</strong>这个前缀别写错。</p>
+</li>
+<li><p>External toolchain gcc version: <code>10.x</code></p>
+<p>设置toolchain的版本。</p>
+</li>
+<li><p>External toolchain kernel headers series: <code>4.20.x</code></p>
+<p>设置用来编译这个toolchain的内核头文件的内核的版本。这个版本可以在toolchain里面的version.h这个文件查到，打开这个文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$</span><span class="language-bash">&#123;toolchain_location&#125;/arm-linux-gnueabihf/libc/usr/include/linux/version.h</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">define LINUX_VERSION_CODE 267277</span></span><br></pre></td></tr></table></figure>
+
+<p>267277对应的16进制为0x4140D，如果版本号为M.m.p，那么</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">M = ( LINUX_VERSION_CODE &gt;&gt; <span class="number">16</span> ) &amp; <span class="number">0xFF</span> <span class="comment">/* 0x04 = 4 */</span></span><br><span class="line">m = ( LINUX_VERSION_CODE &gt;&gt; <span class="number">8</span>  ) &amp; <span class="number">0xFF</span> <span class="comment">/* 0x14 = 20 */</span></span><br><span class="line">p = ( LINUX_VERSION_CODE &gt;&gt; <span class="number">0</span>  ) &amp; <span class="number">0xFF</span> <span class="comment">/* 0x0D = 13 */</span></span><br></pre></td></tr></table></figure>
+
+<p>所以我们设置为4.20.x。</p>
+</li>
+<li><p>External toolchain C library: <code>glibc/eglibc</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>System configuration</strong></p>
+<ul>
+<li><p>Run a getty (login prompt) after boot</p>
+<ul>
+<li><p>TTY port: <code>ttyAMA0</code></p>
+<p>vexpress_a9内核启动的控制台的名字叫做ttyAMA0。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Filesystem images</strong></p>
+<ul>
+<li><p>cpio the root filesystem: <code>enable</code></p>
+<ul>
+<li>Compression method: <code>lz4</code></li>
+</ul>
+<p>我们把编译的rootfs以initramfs的形式和Linux Kernel链接在一起，为了让根文件系统镜像尽量小，可以对文件系统采用lz4压缩。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="编译-1"><a href="#编译-1" class="headerlink" title="编译"></a>编译</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make</span><br></pre></td></tr></table></figure>
+
+<h1 id="编译内核"><a href="#编译内核" class="headerlink" title="编译内核"></a>编译内核</h1><h2 id="下载源码-2"><a href="#下载源码-2" class="headerlink" title="下载源码"></a>下载源码</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h2><p>把前面buildroot编译的rootfs.cpio.lz4拷贝到Linux Kernel根目录下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp &#123;buildroot_dir&#125;/output/images/rootfs.cpio.lz4 ./</span><br></pre></td></tr></table></figure>
+
+<p>然后加载vexpress_a9这块开发板的默认配置，并进入menuconfig做进一步配置：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make ARCH=arm vexpress_defconfig</span><br><span class="line">make ARCH=arm menuconfig</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p><strong>General setup</strong></p>
+<ul>
+<li>Initial RAM filesystem and RAM disk (initramfs&#x2F;initrd) support: <code>enable</code><ul>
+<li>Initramfs source file(s): <code>rootfs.cpio.lz4</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Kernel hacking</strong></p>
+<ul>
+<li><p>printk and dmesg options</p>
+<ul>
+<li><p>Show timing information on printks: <code>enable</code></p>
+<p>这样打印的内核 log 前面会附带有时间戳信息。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="编译-2"><a href="#编译-2" class="headerlink" title="编译"></a>编译</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j8</span><br></pre></td></tr></table></figure>
+
+<h1 id="启动QEMU"><a href="#启动QEMU" class="headerlink" title="启动QEMU"></a>启动QEMU</h1><p>QEMU可以模拟sd卡等外设。我们就把编译好的固件放在一个模拟的sd卡上，让QEMU从这张模拟的sd卡上启动Linux系统。</p>
+<ol>
+<li><p><strong>制作sd卡镜像，并将它格式化成fat格式</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dd if=/dev/zero of=sd.img bs=4096 count=4096</span><br><span class="line">mkfs.vfat sd.img</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>把编译好的kernel zImage和DTB文件拷贝到sd.img中</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo mount sd.img /mnt/ -o loop,rw</span><br><span class="line">sudo cp arch/arm/boot/zImage /mnt/</span><br><span class="line">sudo cp arch/arm/boot/dts/vexpress-v2p-ca9.dtb /mnt/</span><br><span class="line">sudo umount /mnt</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>在QEMU中启动U-Boot</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-arm -M vexpress-a9 -m 512M -kernel $&#123;u-boot_dir&#125;/u-boot -nographic  -sd sd.img</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>从sd卡中加载Linux Kernel和DTB</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">fatload mmc 0:0 0x62008000 zImage</span><br><span class="line">fatload mmc 0:0 0x64008000 vexpress-v2p-ca9.dtb</span><br></pre></td></tr></table></figure>
+
+<p>这里面的0x62008000和0x64008000分别对应zImage和dtb文件在内存中的加载地址。我们可以在<code>arch/arm/Makefile</code>里面搜索<code>textofs</code>:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">141 textofs-y       := 0x00008000</span><br></pre></td></tr></table></figure>
+
+<p>这个<code>textofs</code>定义的就是Linux Kernel zImage执行地址对应的内存偏移地址，默认偏移为0x8000。</p>
+<p>在U-Boot命令行中输入<code>bdinfo</code>命令，可以查到这块开发板内存的起始地址：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">=&gt; bdinfo</span><br><span class="line">boot_params = <span class="number">0x60002000</span></span><br><span class="line">DRAM bank   = <span class="number">0x00000000</span></span><br><span class="line">-&gt; start    = <span class="number">0x60000000</span></span><br><span class="line">-&gt; size     = <span class="number">0x20000000</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到这块开发板的内存其实地址为0x60000000，所以对应内核的起始地址为：0x62008000。DTB的加载地址没有特别的要求，一般注意和 Linux Kernel Image 避开，不要重叠即可。</p>
+</li>
+<li><p><strong>通过<code>bootz</code>命令启动Linux Kernel</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bootz 0x62008000 - 0x64008000</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/qemu/" rel="tag"># qemu</a>
+              <a href="/tags/uboot/" rel="tag"># uboot</a>
+              <a href="/tags/kernel/" rel="tag"># kernel</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/01/24/how-does-dlp-work.html" rel="prev" title="DLP的工作原理">
+                  <i class="fa fa-chevron-left"></i> DLP的工作原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/01/30/install-cross-toolchain-for-arm.html" rel="next" title="安装Arm交叉编译工具链">
+                  安装Arm交叉编译工具链 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>
