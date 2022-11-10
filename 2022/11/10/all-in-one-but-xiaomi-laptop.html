@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="一直想尝试一下All-in-One的方案，但是无奈手边并没有支持iommu的设备，正值双十一之际，就在我决定挑选硬件组装一台All-in-One PC时，我突然想到，自己的小米游戏本有没有可能支持iommu呢？一念之间，我已经做好了Debian live的U盘，此时，神奇的事情发生了。。。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="All-in-One，但是小米笔记本！">
+<meta property="og:url" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="一直想尝试一下All-in-One的方案，但是无奈手边并没有支持iommu的设备，正值双十一之际，就在我决定挑选硬件组装一台All-in-One PC时，我突然想到，自己的小米游戏本有没有可能支持iommu呢？一念之间，我已经做好了Debian live的U盘，此时，神奇的事情发生了。。。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/iommu1.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/iommu2.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/iommu3.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/win1.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/win2.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/win3.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/win4.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/pci1.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/pci2.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/pci3.png">
+<meta property="og:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/win5.png">
+<meta property="article:published_time" content="2022-11-10T14:16:31.000Z">
+<meta property="article:modified_time" content="2022-11-10T17:24:52.647Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="虚拟化">
+<meta property="article:tag" content="软路由">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop/iommu1.png">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop.html","path":"2022/11/10/all-in-one-but-xiaomi-laptop.html","title":"All-in-One，但是小米笔记本！"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>All-in-One，但是小米笔记本！ | colorfulshark</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">64</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">46</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x0-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">0x0 准备工作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x1-%E5%AE%89%E8%A3%85PVE"><span class="nav-number">2.</span> <span class="nav-text">0x1 安装PVE</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x2-%E9%85%8D%E7%BD%AEPCI-Passthrough%E6%89%80%E9%9C%80%E7%89%B9%E6%80%A7"><span class="nav-number">3.</span> <span class="nav-text">0x2 配置PCI Passthrough所需特性</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x2-1-%E5%90%AF%E7%94%A8IOMMU"><span class="nav-number">3.1.</span> <span class="nav-text">0x2.1 启用IOMMU</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x2-2-%E5%8A%A0%E8%BD%BDvfio%E9%A9%B1%E5%8A%A8%E6%A8%A1%E5%9D%97"><span class="nav-number">3.2.</span> <span class="nav-text">0x2.2 加载vfio驱动模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x2-3-%E6%A3%80%E6%9F%A5%E9%85%8D%E7%BD%AE%E6%98%AF%E5%90%A6%E7%94%9F%E6%95%88"><span class="nav-number">3.3.</span> <span class="nav-text">0x2.3 检查配置是否生效</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x3-%E5%AE%89%E8%A3%85Windows11%E8%99%9A%E6%8B%9F%E6%9C%BA"><span class="nav-number">4.</span> <span class="nav-text">0x3 安装Windows11虚拟机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x4-%E8%AE%BE%E7%BD%AEGPU-Passthrough"><span class="nav-number">5.</span> <span class="nav-text">0x4 设置GPU Passthrough</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x5-%E8%BD%AF%E8%B7%AF%E7%94%B1"><span class="nav-number">6.</span> <span class="nav-text">0x5 软路由</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x6-%E4%B8%80%E5%91%A8%E4%B9%8B%E5%90%8E"><span class="nav-number">7.</span> <span class="nav-text">0x6 一周之后</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x7-%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">0x7 参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">64</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2022/11/10/all-in-one-but-xiaomi-laptop.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="All-in-One，但是小米笔记本！ | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          All-in-One，但是小米笔记本！
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2022-11-10 22:16:31" itemprop="dateCreated datePublished" datetime="2022-11-10T22:16:31+08:00">2022-11-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2022-11-11 01:24:52" itemprop="dateModified" datetime="2022-11-11T01:24:52+08:00">2022-11-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Geek/" itemprop="url" rel="index"><span itemprop="name">Geek</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2022/11/10/all-in-one-but-xiaomi-laptop.html#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2022/11/10/all-in-one-but-xiaomi-laptop.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>一直想尝试一下All-in-One的方案，但是无奈手边并没有支持iommu的设备，正值双十一之际，就在我决定挑选硬件组装一台All-in-One PC时，我突然想到，自己的小米游戏本有没有可能支持iommu呢？一念之间，我已经做好了Debian live的U盘，此时，神奇的事情发生了。。。</p>
+</blockquote>
+<span id="more"></span>
+
+<p>没错，你可能已经猜到了，在设置了内核cmdline后，IOMMU竟然启用了，不仅如此，PCI Passthrough所需的特性全部都启用了！最终我成功的在PVE上安装了Windows11并透传了独立显卡GTX1060m。此文将记录这一切是如何发生的。</p>
+<h1 id="0x0-准备工作"><a href="#0x0-准备工作" class="headerlink" title="0x0 准备工作"></a>0x0 准备工作</h1><ul>
+<li>小米游戏本一代，处理器i5-7300hq，显卡GTX1060m，内存16GB</li>
+<li>U盘</li>
+<li>PVE镜像，Windows11镜像</li>
+<li>USB键盘，USB鼠标</li>
+</ul>
+<h1 id="0x1-安装PVE"><a href="#0x1-安装PVE" class="headerlink" title="0x1 安装PVE"></a>0x1 安装PVE</h1><p>可以参考这篇文章<a href="https://blog.colorfulshark.net/2019/11/03/install-openwrt-in-proxmox-ve.html">在Proxmox VE中安装Openwrt作为软路由</a></p>
+<h1 id="0x2-配置PCI-Passthrough所需特性"><a href="#0x2-配置PCI-Passthrough所需特性" class="headerlink" title="0x2 配置PCI Passthrough所需特性"></a>0x2 配置PCI Passthrough所需特性</h1><h2 id="0x2-1-启用IOMMU"><a href="#0x2-1-启用IOMMU" class="headerlink" title="0x2.1 启用IOMMU"></a>0x2.1 启用IOMMU</h2><p>打开grub配置文件，在内核cmdline中追加<code>intel_iommu=on</code>，并更新grub配置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/default/grub</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt; GRUB_CMDLINE_LINUX_DEFAULT=<span class="string">&quot;quiet intel_iommu=on&quot;</span></span></span><br><span class="line"></span><br><span class="line">update-grub</span><br></pre></td></tr></table></figure>
+
+<h2 id="0x2-2-加载vfio驱动模块"><a href="#0x2-2-加载vfio驱动模块" class="headerlink" title="0x2.2 加载vfio驱动模块"></a>0x2.2 加载vfio驱动模块</h2><p>将vfio相关模块追加到<code>/etc/modules</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/modules</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt;</span></span><br><span class="line">vfio</span><br><span class="line">vfio_iommu_type1</span><br><span class="line">vfio_pci</span><br><span class="line">vfio_virqfd</span><br></pre></td></tr></table></figure>
+
+<h2 id="0x2-3-检查配置是否生效"><a href="#0x2-3-检查配置是否生效" class="headerlink" title="0x2.3 检查配置是否生效"></a>0x2.3 检查配置是否生效</h2><ul>
+<li><p>查看IOMMU是否启动</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep -e DMAR -e IOMMU</span><br></pre></td></tr></table></figure>
+
+<p>如果生效，将会有类似于<code>DMAR: IOMMU enabled</code>的log输出，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu1.png" class="">
+</li>
+<li><p>查看IOMMU Interrupt Remapping是否启动</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep &#x27;remapping&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>如果生效，将会有类似于<code>DMAR-IR: Enabled IRQ remapping in x2apic mode</code>的log输出，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu2.png" class="">
+</li>
+<li><p>查看IOMMU Isolation是否启动</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">find /sys/kernel/iommu_groups/ -type l</span><br></pre></td></tr></table></figure>
+
+<p>检查IOMMU分组是否正确，这需要ACS (Access Control Services)的支持，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu3.png" class=""></li>
+</ul>
+<h1 id="0x3-安装Windows11虚拟机"><a href="#0x3-安装Windows11虚拟机" class="headerlink" title="0x3 安装Windows11虚拟机"></a>0x3 安装Windows11虚拟机</h1><p>创建虚拟机的过程中有几个步骤需要注意：</p>
+<ul>
+<li><p>Guest OS选择Microsoft Windows</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win1.png" class="">
+</li>
+<li><p>Machine选择q35，BIOS选择OVMF(UEFI)，添加EFI Disk和TPM</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win2.png" class="">
+</li>
+<li><p>CPU Type选择host</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win3.png" class="">
+</li>
+<li><p>添加Windows的virtio驱动镜像，从<a target="_blank" rel="noopener" href="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/?C=M;O=D">这里</a>下载</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win4.png" class=""></li>
+</ul>
+<p>当安装到选择磁盘这一步时，需要选择<strong>加载驱动程序</strong>，否则会找不到虚拟硬盘。后续的安装过程与标准流程没有区别。</p>
+<h1 id="0x4-设置GPU-Passthrough"><a href="#0x4-设置GPU-Passthrough" class="headerlink" title="0x4 设置GPU Passthrough"></a>0x4 设置GPU Passthrough</h1><p>这是All-in-One方案中最重要的部分，毕竟代码要写，游戏也还是要玩的😁。</p>
+<p>这个步骤本身没什么难的，直接添加对应的PCI设备即可。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci1.png" class="">
+
+<p>但对于小米游戏本，这一步有两个大坑！</p>
+<ul>
+<li><p>因为它的独显的VBIOS不支持UEFI启动，所以如果虚拟机只有一个独显，WIndows系统是没有办法完成初始化的，表现为系统始终无法启动，因此我们需要一个虚拟显示设备辅助WIndows启动。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci2.png" class="">
+</li>
+<li><p>好的，现在我们进入系统了，结果发现显卡驱动竟然安装不上，显示为<strong>找不到兼容的显示设备</strong>。经过几天的调查，发现设备管理器里面，显卡的Sub_Vendor ID和Sub_Product ID是全0，有可能是这个信息是存储在主板BIOS中，而不是VBIOS中，解决方法比较简单，在PVE的PCI Passthrough界面可以直接配置该信息。另外还需要选中<strong>All Functions</strong>和<strong>PCI-Express</strong>。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci3.png" class="">
+</li>
+<li><p>设置KVM选项<code>ignore_msrs</code>，否则虚拟机在使用独显的过程中会崩溃</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;options kvm ignore_msrs=1 report_ignored_msrs=0&quot; &gt; /etc/modprobe.d/kvm.conf</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>最后，附上完整的硬件配置</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win5.png" class="">
+
+<h1 id="0x5-软路由"><a href="#0x5-软路由" class="headerlink" title="0x5 软路由"></a>0x5 软路由</h1><p>既然是All-in-One，OpenWRT，爱快，网心云这些肯定是少不了啦，不过这些都是常规的操作，不作详细介绍了。</p>
+<h1 id="0x6-一周之后"><a href="#0x6-一周之后" class="headerlink" title="0x6 一周之后"></a>0x6 一周之后</h1><p>虽然整套All-in-One方案在功能上没有任何问题，但却拜倒在这颗i5-7300hq上，它太弱啦😂。</p>
+<p>直接表现就是在Windows中玩游戏一卡一卡，CPU占用直接100%😫。</p>
+<p>所以一周之后，我打算重新装回WIndows11，不过在之前，我写下此文，特此纪念自己的折腾之路😊。</p>
+<h1 id="0x7-参考"><a href="#0x7-参考" class="headerlink" title="0x7 参考"></a>0x7 参考</h1><p><a target="_blank" rel="noopener" href="https://pve.proxmox.com/wiki/Pci_passthrough">https://pve.proxmox.com/wiki/Pci_passthrough</a></p>
+<p><a target="_blank" rel="noopener" href="https://pve.proxmox.com/wiki/PCI(e)_Passthrough">https://pve.proxmox.com/wiki/PCI(e)_Passthrough</a></p>
+<p><a target="_blank" rel="noopener" href="https://pve.proxmox.com/wiki/Windows_VirtIO_Drivers">https://pve.proxmox.com/wiki/Windows_VirtIO_Drivers</a></p>
+<p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF">https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF</a></p>
+<p><a target="_blank" rel="noopener" href="https://lantian.pub/article/modify-computer/laptop-muxed-nvidia-passthrough.lantian/">https://lantian.pub/article/modify-computer/laptop-muxed-nvidia-passthrough.lantian/</a></p>
+<p><a target="_blank" rel="noopener" href="https://lantian.pub/article/modify-computer/laptop-intel-nvidia-optimus-passthrough.lantian/">https://lantian.pub/article/modify-computer/laptop-intel-nvidia-optimus-passthrough.lantian/</a></p>
+<p><a target="_blank" rel="noopener" href="https://post.smzdm.com/p/avx8pn3n/">https://post.smzdm.com/p/avx8pn3n/</a></p>
+<p><a target="_blank" rel="noopener" href="https://xylog.cn/2020/03/03/proxmox-vga-nvidia.html">https://xylog.cn/2020/03/03/proxmox-vga-nvidia.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://iamroot.cn/pvean-zhuang-win/">https://iamroot.cn/pvean-zhuang-win/</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.syfly007.com/post/CS/linux/pve%E6%98%BE%E5%8D%A1%E7%9B%B4%E9%80%9A.html">https://www.syfly007.com/post/CS/linux/pve%E6%98%BE%E5%8D%A1%E7%9B%B4%E9%80%9A.html</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%99%9A%E6%8B%9F%E5%8C%96/" rel="tag"># 虚拟化</a>
+              <a href="/tags/%E8%BD%AF%E8%B7%AF%E7%94%B1/" rel="tag"># 软路由</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/08/30/make-money-with-wxedge.html" rel="prev" title="部署网心云——利用闲置宽带赚钱">
+                  <i class="fa fa-chevron-left"></i> 部署网心云——利用闲置宽带赚钱
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"colorfulshark","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

@@ -3616,4 +3616,101 @@ Windows 平台
         <tag>虚拟化</tag>
       </tags>
   </entry>
+  <entry>
+    <title>All-in-One，但是小米笔记本！</title>
+    <url>/2022/11/10/all-in-one-but-xiaomi-laptop.html</url>
+    <content><![CDATA[<blockquote>
+<p>一直想尝试一下All-in-One的方案，但是无奈手边并没有支持iommu的设备，正值双十一之际，就在我决定挑选硬件组装一台All-in-One PC时，我突然想到，自己的小米游戏本有没有可能支持iommu呢？一念之间，我已经做好了Debian live的U盘，此时，神奇的事情发生了。。。</p>
+</blockquote>
+<span id="more"></span>
+
+<p>没错，你可能已经猜到了，在设置了内核cmdline后，IOMMU竟然启用了，不仅如此，PCI Passthrough所需的特性全部都启用了！最终我成功的在PVE上安装了Windows11并透传了独立显卡GTX1060m。此文将记录这一切是如何发生的。</p>
+<h1 id="0x0-准备工作"><a href="#0x0-准备工作" class="headerlink" title="0x0 准备工作"></a>0x0 准备工作</h1><ul>
+<li>小米游戏本一代，处理器i5-7300hq，显卡GTX1060m，内存16GB</li>
+<li>U盘</li>
+<li>PVE镜像，Windows11镜像</li>
+<li>USB键盘，USB鼠标</li>
+</ul>
+<h1 id="0x1-安装PVE"><a href="#0x1-安装PVE" class="headerlink" title="0x1 安装PVE"></a>0x1 安装PVE</h1><p>可以参考这篇文章<a href="https://blog.colorfulshark.net/2019/11/03/install-openwrt-in-proxmox-ve.html">在Proxmox VE中安装Openwrt作为软路由</a></p>
+<h1 id="0x2-配置PCI-Passthrough所需特性"><a href="#0x2-配置PCI-Passthrough所需特性" class="headerlink" title="0x2 配置PCI Passthrough所需特性"></a>0x2 配置PCI Passthrough所需特性</h1><h2 id="0x2-1-启用IOMMU"><a href="#0x2-1-启用IOMMU" class="headerlink" title="0x2.1 启用IOMMU"></a>0x2.1 启用IOMMU</h2><p>打开grub配置文件，在内核cmdline中追加<code>intel_iommu=on</code>，并更新grub配置。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim /etc/default/grub</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt; GRUB_CMDLINE_LINUX_DEFAULT=<span class="string">&quot;quiet intel_iommu=on&quot;</span></span></span><br><span class="line"></span><br><span class="line">update-grub</span><br></pre></td></tr></table></figure>
+
+<h2 id="0x2-2-加载vfio驱动模块"><a href="#0x2-2-加载vfio驱动模块" class="headerlink" title="0x2.2 加载vfio驱动模块"></a>0x2.2 加载vfio驱动模块</h2><p>将vfio相关模块追加到<code>/etc/modules</code>。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim /etc/modules</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt;</span></span><br><span class="line">vfio</span><br><span class="line">vfio_iommu_type1</span><br><span class="line">vfio_pci</span><br><span class="line">vfio_virqfd</span><br></pre></td></tr></table></figure>
+
+<h2 id="0x2-3-检查配置是否生效"><a href="#0x2-3-检查配置是否生效" class="headerlink" title="0x2.3 检查配置是否生效"></a>0x2.3 检查配置是否生效</h2><ul>
+<li><p>查看IOMMU是否启动</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">dmesg | grep -e DMAR -e IOMMU</span><br></pre></td></tr></table></figure>
+
+<p>如果生效，将会有类似于<code>DMAR: IOMMU enabled</code>的log输出，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu1.png" class="">
+</li>
+<li><p>查看IOMMU Interrupt Remapping是否启动</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">dmesg | grep &#x27;remapping&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>如果生效，将会有类似于<code>DMAR-IR: Enabled IRQ remapping in x2apic mode</code>的log输出，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu2.png" class="">
+</li>
+<li><p>查看IOMMU Isolation是否启动</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">find /sys/kernel/iommu_groups/ -type l</span><br></pre></td></tr></table></figure>
+
+<p>检查IOMMU分组是否正确，这需要ACS (Access Control Services)的支持，如图</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/iommu3.png" class=""></li>
+</ul>
+<h1 id="0x3-安装Windows11虚拟机"><a href="#0x3-安装Windows11虚拟机" class="headerlink" title="0x3 安装Windows11虚拟机"></a>0x3 安装Windows11虚拟机</h1><p>创建虚拟机的过程中有几个步骤需要注意：</p>
+<ul>
+<li><p>Guest OS选择Microsoft Windows</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win1.png" class="">
+</li>
+<li><p>Machine选择q35，BIOS选择OVMF(UEFI)，添加EFI Disk和TPM</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win2.png" class="">
+</li>
+<li><p>CPU Type选择host</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win3.png" class="">
+</li>
+<li><p>添加Windows的virtio驱动镜像，从<a href="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/?C=M;O=D">这里</a>下载</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win4.png" class=""></li>
+</ul>
+<p>当安装到选择磁盘这一步时，需要选择<strong>加载驱动程序</strong>，否则会找不到虚拟硬盘。后续的安装过程与标准流程没有区别。</p>
+<h1 id="0x4-设置GPU-Passthrough"><a href="#0x4-设置GPU-Passthrough" class="headerlink" title="0x4 设置GPU Passthrough"></a>0x4 设置GPU Passthrough</h1><p>这是All-in-One方案中最重要的部分，毕竟代码要写，游戏也还是要玩的😁。</p>
+<p>这个步骤本身没什么难的，直接添加对应的PCI设备即可。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci1.png" class="">
+
+<p>但对于小米游戏本，这一步有两个大坑！</p>
+<ul>
+<li><p>因为它的独显的VBIOS不支持UEFI启动，所以如果虚拟机只有一个独显，WIndows系统是没有办法完成初始化的，表现为系统始终无法启动，因此我们需要一个虚拟显示设备辅助WIndows启动。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci2.png" class="">
+</li>
+<li><p>好的，现在我们进入系统了，结果发现显卡驱动竟然安装不上，显示为<strong>找不到兼容的显示设备</strong>。经过几天的调查，发现设备管理器里面，显卡的Sub_Vendor ID和Sub_Product ID是全0，有可能是这个信息是存储在主板BIOS中，而不是VBIOS中，解决方法比较简单，在PVE的PCI Passthrough界面可以直接配置该信息。另外还需要选中<strong>All Functions</strong>和<strong>PCI-Express</strong>。</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/pci3.png" class="">
+</li>
+<li><p>设置KVM选项<code>ignore_msrs</code>，否则虚拟机在使用独显的过程中会崩溃</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">echo &quot;options kvm ignore_msrs=1 report_ignored_msrs=0&quot; &gt; /etc/modprobe.d/kvm.conf</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>最后，附上完整的硬件配置</p>
+<img src="/2022/11/10/all-in-one-but-xiaomi-laptop/win5.png" class="">
+
+<h1 id="0x5-软路由"><a href="#0x5-软路由" class="headerlink" title="0x5 软路由"></a>0x5 软路由</h1><p>既然是All-in-One，OpenWRT，爱快，网心云这些肯定是少不了啦，不过这些都是常规的操作，不作详细介绍了。</p>
+<h1 id="0x6-一周之后"><a href="#0x6-一周之后" class="headerlink" title="0x6 一周之后"></a>0x6 一周之后</h1><p>虽然整套All-in-One方案在功能上没有任何问题，但却拜倒在这颗i5-7300hq上，它太弱啦😂。</p>
+<p>直接表现就是在Windows中玩游戏一卡一卡，CPU占用直接100%😫。</p>
+<p>所以一周之后，我打算重新装回WIndows11，不过在之前，我写下此文，特此纪念自己的折腾之路😊。</p>
+<h1 id="0x7-参考"><a href="#0x7-参考" class="headerlink" title="0x7 参考"></a>0x7 参考</h1><p><a href="https://pve.proxmox.com/wiki/Pci_passthrough">https://pve.proxmox.com/wiki/Pci_passthrough</a></p>
+<p><a href="https://pve.proxmox.com/wiki/PCI(e)_Passthrough">https://pve.proxmox.com/wiki/PCI(e)_Passthrough</a></p>
+<p><a href="https://pve.proxmox.com/wiki/Windows_VirtIO_Drivers">https://pve.proxmox.com/wiki/Windows_VirtIO_Drivers</a></p>
+<p><a href="https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF">https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF</a></p>
+<p><a href="https://lantian.pub/article/modify-computer/laptop-muxed-nvidia-passthrough.lantian/">https://lantian.pub/article/modify-computer/laptop-muxed-nvidia-passthrough.lantian/</a></p>
+<p><a href="https://lantian.pub/article/modify-computer/laptop-intel-nvidia-optimus-passthrough.lantian/">https://lantian.pub/article/modify-computer/laptop-intel-nvidia-optimus-passthrough.lantian/</a></p>
+<p><a href="https://post.smzdm.com/p/avx8pn3n/">https://post.smzdm.com/p/avx8pn3n/</a></p>
+<p><a href="https://xylog.cn/2020/03/03/proxmox-vga-nvidia.html">https://xylog.cn/2020/03/03/proxmox-vga-nvidia.html</a></p>
+<p><a href="https://iamroot.cn/pvean-zhuang-win/">https://iamroot.cn/pvean-zhuang-win/</a></p>
+<p><a href="https://www.syfly007.com/post/CS/linux/pve%E6%98%BE%E5%8D%A1%E7%9B%B4%E9%80%9A.html">https://www.syfly007.com/post/CS/linux/pve%E6%98%BE%E5%8D%A1%E7%9B%B4%E9%80%9A.html</a></p>
+]]></content>
+      <categories>
+        <category>Geek</category>
+      </categories>
+      <tags>
+        <tag>虚拟化</tag>
+        <tag>软路由</tag>
+      </tags>
+  </entry>
 </search>
