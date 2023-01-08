@@ -3713,4 +3713,65 @@ Windows 平台
         <tag>软路由</tag>
       </tags>
   </entry>
+  <entry>
+    <title>使用acme申请https证书</title>
+    <url>/2023/01/08/issue-https-cert-with-acme.html</url>
+    <content><![CDATA[<blockquote>
+<p>随着互联网的飞速发展，http这种明文传输协议已经越来越无法满足建站的需求，因此当今绝大多数网站都已经切换到了https。虽然https协议使用TLS加密极大地提高了传输安全性，但也带来了更大的部署难度，首当其冲的就是TLS证书申请，本文将介绍如何使用acme免费申请一个供个人使用的证书。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><p>虽然说是免费申请，但我们还是需要一些前置条件，其中最重要的就是</p>
+<ol>
+<li>一个域名。</li>
+<li>一个公网IP（v4或者v6都可以）。</li>
+</ol>
+<p>此外，还需要一个Linux环境来执行acme程序。</p>
+<h1 id="安装acme"><a href="#安装acme" class="headerlink" title="安装acme"></a>安装<a href="https://github.com/acmesh-official/acme.sh">acme</a></h1><p>证书申请的原理就是向一些证书发行组织，如<a href="https://letsencrypt.org/">letsencrypt</a>、<a href="https://zerossl.com/">zerossl</a>等，发送域名和服务器等信息，如果信息校验成功，这些组织就会给我们颁发TLS证书。</p>
+<p>由于与证书颁发服务器之间的通信协议较为繁琐，我们需要使用程序来完成这一系列操作，而acme就是用来完成这项工作的脚本程序。</p>
+<p>根据使用系统环境的不同，acme的安装方式也不尽相同。</p>
+<h2 id="标准发行版"><a href="#标准发行版" class="headerlink" title="标准发行版"></a>标准发行版</h2><p>如Ubuntu、Debian、CentOS等。</p>
+<p><strong>在线安装</strong></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl https://get.acme.sh | sh -s email=my@example.com</span><br><span class="line">wget -O -  https://get.acme.sh | sh -s email=my@example.com</span><br></pre></td></tr></table></figure>
+
+<p><strong>离线安装</strong></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/acmesh-official/acme.sh.git</span><br><span class="line">cd ./acme.sh</span><br><span class="line">./acme.sh --install -m my@example.com</span><br></pre></td></tr></table></figure>
+
+<p>申请的证书保存在<code>~/.acme.sh/$domain</code>中。</p>
+<h2 id="OpenWRT"><a href="#OpenWRT" class="headerlink" title="OpenWRT"></a>OpenWRT</h2><p>安装以下包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">luci-app-acme</span><br><span class="line">acme</span><br><span class="line">acme-deploy</span><br><span class="line">acme-dnsapi</span><br><span class="line">acme-notify</span><br></pre></td></tr></table></figure>
+
+<p>申请的证书保存在<code>/etc/acme/$domain</code>中。</p>
+<h1 id="证书申请"><a href="#证书申请" class="headerlink" title="证书申请"></a>证书申请</h1><p>根据网站部署方式的不同，使用acme申请证书的方式也不相同。</p>
+<h2 id="使用DNS-API申请证书"><a href="#使用DNS-API申请证书" class="headerlink" title="使用DNS API申请证书"></a>使用DNS API申请证书</h2><p>要使用DNS API，通常都需要获取一个API Key。acme要求我们在使用DNS API之前设置相关环境变量。</p>
+<h3 id="设置环境变量"><a href="#设置环境变量" class="headerlink" title="设置环境变量"></a>设置环境变量</h3><h4 id="Cloudflare"><a href="#Cloudflare" class="headerlink" title="Cloudflare"></a>Cloudflare</h4><p>打开<a href="https://dash.cloudflare.com/profile/api-tokens">https://dash.cloudflare.com/profile/api-tokens</a>，查看<code>Global API Key</code>，并设置以下环境变量。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export CF_Key=&quot;&quot;</span><br><span class="line">export CF_Email=&quot;&quot;</span><br><span class="line">export DNS_API=&#x27;dns_cf&#x27;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Dynv6"><a href="#Dynv6" class="headerlink" title="Dynv6"></a>Dynv6</h4><p>打开<a href="https://dynv6.com/keys/token/new">https://dynv6.com/keys/token/new</a>，创建一个新的HTTP Token。</p>
+<p>创建本地ssh公私钥，并将公钥<code>~/.ssh/id_ed25519.pub</code>上传到<a href="https://dynv6.com/keys">https://dynv6.com/keys</a>中的<code>SSH Public Keys</code>。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ssh-keygen -t ed25519</span><br></pre></td></tr></table></figure>
+
+<p>设置环境变量</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export KEY=&quot;~/.ssh/id_ed25519.pub&quot;</span><br><span class="line">export DYNV6_TOKEN=&quot;&quot;</span><br><span class="line">export DNS_API=&#x27;dns_dynv6&#x27;</span><br></pre></td></tr></table></figure>
+
+<h3 id="申请证书"><a href="#申请证书" class="headerlink" title="申请证书"></a>申请证书</h3><h4 id="标准发行版-1"><a href="#标准发行版-1" class="headerlink" title="标准发行版"></a>标准发行版</h4><p>执行以下脚本之前，相关的环境变量必须已经设置好。</p>
+<p>域名可以填入多个，用空格分隔，这样多个域名可以共享同一个证书。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Related environment variables must have been exported before</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">the first is the main domain</span></span><br><span class="line">domain_list=&#x27;example.org sub.example.org *.sub.example.org&#x27;</span><br><span class="line">for domain in $domain_list</span><br><span class="line">do</span><br><span class="line">        domain_opt=&quot;$domain_opt -d $domain&quot;</span><br><span class="line">done</span><br><span class="line"></span><br><span class="line">~/.acme.sh/acme.sh --issue --dns $DNS_API $domain_opt --server letsencrypt</span><br></pre></td></tr></table></figure>
+
+<h4 id="OpenWRT-1"><a href="#OpenWRT-1" class="headerlink" title="OpenWRT"></a>OpenWRT</h4><p>打开<code>服务 &gt; ACME证书</code>。</p>
+<p>在<code>域名</code>这一项里面添加所需的域名，在<code>DNS API</code>这一项里面填入环境变量<code>$DNS_API</code>的值，最后分别将其它环境变量填入<code>DNS API 凭证</code>中。</p>
+<img src="/2023/01/08/issue-https-cert-with-acme/openwrt_acme_cf.png" class="">
+
+<h1 id="证书使用"><a href="#证书使用" class="headerlink" title="证书使用"></a>证书使用</h1><p>为了确保证书的最佳兼容性，证书文件使用<code>fullchain.cer</code>，而密钥文件使用<code>$domain.key</code></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://blog.20200202.best/dynv6acmednsapihowto/">动态域名商Dynv6之acme使用dnsapi申请证书</a></p>
+]]></content>
+      <categories>
+        <category>Web service</category>
+      </categories>
+      <tags>
+        <tag>acme</tag>
+        <tag>https</tag>
+        <tag>证书</tag>
+      </tags>
+  </entry>
 </search>
