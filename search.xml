@@ -3794,4 +3794,55 @@ Windows 平台
         <tag>yuzu</tag>
       </tags>
   </entry>
+  <entry>
+    <title>使用QEMU GDB调试Linux内核</title>
+    <url>/2023/01/28/debug-kernel-with-qemu-gdb.html</url>
+    <content><![CDATA[<blockquote>
+<p>调试Linux内核从来都不是一件容易事。如果在开发过程中发现内核无法启动，甚至连日志输出都没有，问题就会变得很棘手。如果是开发板，可能还可以借助JTAG，但如果没有JTAG，要如何进行调试呢？本文给出另外一种可能：使用QEMU来进行内核调试。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><p>要使用QEMU GDB调试Linux内核，首先我们需要让内核能够在QEMU中启动。对于X86架构，这通常不困难，但是对于ARM架构，尤其是ARM32架构，可能需要借助uboot才能启动内核，具体可以参考<a href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">在QEMU中启动U-Boot和内核</a>。</p>
+<p>其次我们还需要GDB运行环境，可以使用GDB命令，也可以使用<a href="https://www.gdbgui.com/">gdbgui</a>这样的图形化工具。</p>
+<p>最后，我们还需要让内核保留调试信息，可以在<code>menuconfig</code>做如下配置</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Symbol: DEBUG_KERNEL [=y]</span><br><span class="line">Type  : bool</span><br><span class="line">Defined at lib/Kconfig.debug:211</span><br><span class="line">  Prompt: Kernel debugging</span><br><span class="line">  Location:</span><br><span class="line">    -&gt; Kernel hacking</span><br><span class="line">      -&gt; Kernel debugging (DEBUG_KERNEL [=y])</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Symbol: DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT [=y]</span><br><span class="line">Type  : bool</span><br><span class="line">Defined at lib/Kconfig.debug:258</span><br><span class="line">  Prompt: Rely on the toolchain&#x27;s implicit default DWARF version</span><br><span class="line">  Depends on: &lt;choice&gt; &amp;&amp; (!CC_IS_CLANG [=n] || AS_IS_LLVM [=n] || CLANG_VERSION [=0]&lt;140000 || AS_IS_GNU [=y] &amp;&amp; \</span><br><span class="line">AS_VERSION [=23502]&gt;=23502 &amp;&amp; AS_HAS_NON_CONST_LEB128 [=y])</span><br><span class="line">  Location:</span><br><span class="line">   -&gt; Kernel hacking</span><br><span class="line">     -&gt; Compile-time checks and compiler options</span><br><span class="line">       -&gt; Debug information (&lt;choice&gt; [=y])</span><br><span class="line">         -&gt; Rely on the toolchain&#x27;s implicit default DWARF version (DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT [=y])</span><br></pre></td></tr></table></figure>
+
+<h1 id="启动GDB-Server"><a href="#启动GDB-Server" class="headerlink" title="启动GDB Server"></a>启动GDB Server</h1><p>假设我们基于X86架构调试，那么编译出的内核镜像通常是<strong>bzImage</strong>，我们可以尝试使用如下命令启动内核，因为并没有指定根文件系统，所以内核会在挂载root目录时panic。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">qemu-system-x86_64 -nographic -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -append <span class="string">&#x27;console=ttyS0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>要启动QEMU内置的GDB Server，我们需要使用2个额外的参数</p>
+<ul>
+<li><code>-s</code>: Do not start CPU at startup</li>
+<li><code>-S</code>: Open a gdbserver on TCP port 1234</li>
+</ul>
+<p>第一个参数的目的是让我们能够在CPU启动之前连接GDB Server，而第二个参数则是启动GDB Server。</p>
+<p>此外，我们还需要添加一个内核cmdline参数<code>nokaslr</code>来关闭内核地址随机化，否则我们打断点的地址与实际执行的地址将不一致，从而导致断点失效。</p>
+<p>于是，最终的命令为</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">qemu-system-x86_64 -nographic -s -S -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -append <span class="string">&#x27;console=ttyS0 nokaslr&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>执行命令后，我们会发现QEMU没有任何输出，因为此时虚拟机的CPU还未启动，接下来，我们将在GDB中完成后续工作。</p>
+<h1 id="GDB调试"><a href="#GDB调试" class="headerlink" title="GDB调试"></a>GDB调试</h1><p>在内核源码根目录执行<code>gdb</code>命令进入GDB shell。</p>
+<p>首先连接到QEMU的GDB Server，默认端口是<code>1234</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(gdb) file vmlinux</span><br><span class="line">(gdb) add-auto-load-safe-path $(pwd)</span><br><span class="line">(gdb) target remote localhost:1234</span><br></pre></td></tr></table></figure>
+
+<p>然后我们设置断点，以<code>start_kernel</code>函数为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(gdb) break start_kernel</span><br></pre></td></tr></table></figure>
+
+<p>最后，我们通过GDB控制QEMU继续执行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(gdb) continue</span><br></pre></td></tr></table></figure>
+
+<p>我们将看到QEMU继续执行，并在<code>start_kernel</code>处停下来，等待GDB的命令。之后的调试方式与常规用户态的调试大同小异。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://stackoverflow.com/questions/11408041/how-to-debug-the-linux-kernel-with-gdb-and-qemu?_gl=1*1x1uq6h*_ga*MjA1NzM2MTc3LjE2NTUzNjY3NTA.*_ga_S812YQPLT2*MTY2NDE4MzI0NS40LjEuMTY2NDE4MzMxMS4wLjAuMA">How to debug the Linux kernel with GDB and QEMU?</a></p>
+]]></content>
+      <categories>
+        <category>Kernel</category>
+      </categories>
+      <tags>
+        <tag>qemu</tag>
+        <tag>kernel</tag>
+        <tag>debug</tag>
+      </tags>
+  </entry>
 </search>

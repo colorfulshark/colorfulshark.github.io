@@ -20,35 +20,30 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.1","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="随着手机拍照的大规模普及，越来越多的人拿起手机记录生活，摄像头的各种参数也逐渐被大众所熟知。相较于大家比较关注的CMOS尺寸和像素，镜头这个话题的热度比较冷清。目前主流的镜头都是使用玻璃作为镜片，通过调节镜片之前的间距来实现对焦。但是，还有一种使用液体来实现对焦的镜头，今天就介绍一下这种有趣的液态镜头。">
+    <meta name="description" content="调试Linux内核从来都不是一件容易事。如果在开发过程中发现内核无法启动，甚至连日志输出都没有，问题就会变得很棘手。如果是开发板，可能还可以借助JTAG，但如果没有JTAG，要如何进行调试呢？本文给出另外一种可能：使用QEMU来进行内核调试。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="什么是液态镜头（Liquid Lens）">
-<meta property="og:url" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens.html">
+<meta property="og:title" content="使用QEMU GDB调试Linux内核">
+<meta property="og:url" content="https://blog.colorfulshark.net/2023/01/28/debug-kernel-with-qemu-gdb.html">
 <meta property="og:site_name" content="colorfulshark">
-<meta property="og:description" content="随着手机拍照的大规模普及，越来越多的人拿起手机记录生活，摄像头的各种参数也逐渐被大众所熟知。相较于大家比较关注的CMOS尺寸和像素，镜头这个话题的热度比较冷清。目前主流的镜头都是使用玻璃作为镜片，通过调节镜片之前的间距来实现对焦。但是，还有一种使用液体来实现对焦的镜头，今天就介绍一下这种有趣的液态镜头。">
+<meta property="og:description" content="调试Linux内核从来都不是一件容易事。如果在开发过程中发现内核无法启动，甚至连日志输出都没有，问题就会变得很棘手。如果是开发板，可能还可以借助JTAG，但如果没有JTAG，要如何进行调试呢？本文给出另外一种可能：使用QEMU来进行内核调试。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/demonstrate_liquid_lens.gif">
-<meta property="og:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/liquid_lenses_in_imaging.png">
-<meta property="og:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/liquid-lens-appearance.png">
-<meta property="og:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/liquid-lens-driver.png">
-<meta property="og:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/liquid-lens-animation.gif">
-<meta property="article:published_time" content="2021-01-31T08:29:29.000Z">
-<meta property="article:modified_time" content="2023-01-27T10:29:03.690Z">
+<meta property="article:published_time" content="2023-01-28T11:25:35.000Z">
+<meta property="article:modified_time" content="2023-01-30T11:01:09.764Z">
 <meta property="article:author" content="Ryan Wong">
-<meta property="article:tag" content="liquid">
-<meta property="article:tag" content="lens">
+<meta property="article:tag" content="qemu">
+<meta property="article:tag" content="kernel">
+<meta property="article:tag" content="debug">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens/demonstrate_liquid_lens.gif">
 
 
-<link rel="canonical" href="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens.html">
+<link rel="canonical" href="https://blog.colorfulshark.net/2023/01/28/debug-kernel-with-qemu-gdb.html">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens.html","path":"2021/01/31/introduction-of-liquid-lens.html","title":"什么是液态镜头（Liquid Lens）"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2023/01/28/debug-kernel-with-qemu-gdb.html","path":"2023/01/28/debug-kernel-with-qemu-gdb.html","title":"使用QEMU GDB调试Linux内核"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>什么是液态镜头（Liquid Lens） | colorfulshark</title>
+<title>使用QEMU GDB调试Linux内核 | colorfulshark</title>
   
 
 
@@ -137,7 +132,7 @@
   
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -150,6 +145,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">准备工作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8GDB-Server"><span class="nav-number">2.</span> <span class="nav-text">启动GDB Server</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#GDB%E8%B0%83%E8%AF%95"><span class="nav-number">3.</span> <span class="nav-text">GDB调试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -214,7 +210,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2021/01/31/introduction-of-liquid-lens.html">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2023/01/28/debug-kernel-with-qemu-gdb.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -227,12 +223,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="什么是液态镜头（Liquid Lens） | colorfulshark">
+      <meta itemprop="name" content="使用QEMU GDB调试Linux内核 | colorfulshark">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          什么是液态镜头（Liquid Lens）
+          使用QEMU GDB调试Linux内核
         </h1>
 
         <div class="post-meta-container">
@@ -243,14 +239,14 @@
       </span>
       <span class="post-meta-item-text">Posted on</span>
 
-      <time title="Created: 2021-01-31 16:29:29" itemprop="dateCreated datePublished" datetime="2021-01-31T16:29:29+08:00">2021-01-31</time>
+      <time title="Created: 2023-01-28 19:25:35" itemprop="dateCreated datePublished" datetime="2023-01-28T19:25:35+08:00">2023-01-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2023-01-27 18:29:03" itemprop="dateModified" datetime="2023-01-27T18:29:03+08:00">2023-01-27</time>
+      <time title="Modified: 2023-01-30 19:01:09" itemprop="dateModified" datetime="2023-01-30T19:01:09+08:00">2023-01-30</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -258,7 +254,7 @@
       </span>
       <span class="post-meta-item-text">In</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Geek/" itemprop="url" rel="index"><span itemprop="name">Geek</span></a>
+          <a href="/categories/Kernel/" itemprop="url" rel="index"><span itemprop="name">Kernel</span></a>
         </span>
     </span>
 
@@ -273,31 +269,43 @@
     
     <div class="post-body" itemprop="articleBody">
         <blockquote>
-<p>随着手机拍照的大规模普及，越来越多的人拿起手机记录生活，摄像头的各种参数也逐渐被大众所熟知。相较于大家比较关注的CMOS尺寸和像素，镜头这个话题的热度比较冷清。目前主流的镜头都是使用玻璃作为镜片，通过调节镜片之前的间距来实现对焦。但是，还有一种使用液体来实现对焦的镜头，今天就介绍一下这种有趣的<strong>液态镜头</strong>。</p>
+<p>调试Linux内核从来都不是一件容易事。如果在开发过程中发现内核无法启动，甚至连日志输出都没有，问题就会变得很棘手。如果是开发板，可能还可以借助JTAG，但如果没有JTAG，要如何进行调试呢？本文给出另外一种可能：使用QEMU来进行内核调试。</p>
 </blockquote>
 <span id="more"></span>
 
-<p>首先来看一下液态镜头的实际效果：</p>
-<img src="/2021/01/31/introduction-of-liquid-lens/demonstrate_liquid_lens.gif" class="" title="demonstrate_liquid_lens.gif">
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><p>要使用QEMU GDB调试Linux内核，首先我们需要让内核能够在QEMU中启动。对于X86架构，这通常不困难，但是对于ARM架构，尤其是ARM32架构，可能需要借助uboot才能启动内核，具体可以参考<a href="https://blog.colorfulshark.net/2021/01/30/boot-kernel-in-uboot-from-qemu.html">在QEMU中启动U-Boot和内核</a>。</p>
+<p>其次我们还需要GDB运行环境，可以使用GDB命令，也可以使用<a target="_blank" rel="noopener" href="https://www.gdbgui.com/">gdbgui</a>这样的图形化工具。</p>
+<p>最后，我们还需要让内核保留调试信息，可以在<code>menuconfig</code>做如下配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Symbol: DEBUG_KERNEL [=y]</span><br><span class="line">Type  : bool</span><br><span class="line">Defined at lib/Kconfig.debug:211</span><br><span class="line">  Prompt: Kernel debugging</span><br><span class="line">  Location:</span><br><span class="line">    -&gt; Kernel hacking</span><br><span class="line">      -&gt; Kernel debugging (DEBUG_KERNEL [=y])</span><br></pre></td></tr></table></figure>
 
-<p>可以看到，镜头可以在一个相当大的范围内连续调节焦距，并且整个过程非常顺滑。</p>
-<p>液态镜头不使用传统的玻璃作为光学透镜，而是使用透明的油滴，没错，就是<strong>一滴油</strong>和<strong>一滴水</strong>。</p>
-<p>传统的镜头是使用一组镜片，通过调节镜片的间距来调节整个光学系统的焦点，因为每个镜片的曲率半径是没有办法变化的，所以单一的镜片就不能实现对焦。</p>
-<p>液态镜头则恰恰相反，它通过改变“镜片”的曲率半径来实现对焦，这非常类似于人眼的晶状体，如下图所示：</p>
-<img src="/2021/01/31/introduction-of-liquid-lens/liquid_lenses_in_imaging.png" class="" title="liquid_lenses_in_imaging.png">
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Symbol: DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT [=y]</span><br><span class="line">Type  : bool</span><br><span class="line">Defined at lib/Kconfig.debug:258</span><br><span class="line">  Prompt: Rely on the toolchain&#x27;s implicit default DWARF version</span><br><span class="line">  Depends on: &lt;choice&gt; &amp;&amp; (!CC_IS_CLANG [=n] || AS_IS_LLVM [=n] || CLANG_VERSION [=0]&lt;140000 || AS_IS_GNU [=y] &amp;&amp; \</span><br><span class="line">AS_VERSION [=23502]&gt;=23502 &amp;&amp; AS_HAS_NON_CONST_LEB128 [=y])</span><br><span class="line">  Location:</span><br><span class="line">   -&gt; Kernel hacking</span><br><span class="line">     -&gt; Compile-time checks and compiler options</span><br><span class="line">       -&gt; Debug information (&lt;choice&gt; [=y])</span><br><span class="line">         -&gt; Rely on the toolchain&#x27;s implicit default DWARF version (DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT [=y])</span><br></pre></td></tr></table></figure>
 
-<p>与人眼通过睫状肌控制晶状体的形状不同，液态镜头利用了一种叫做<strong>电润湿（Electrowetting）</strong>的现象，简单的说就是通过改变电压来改变抗水表面的亲水性，由于原先抗水的表面现在变得更吸水，油膜不得不改变其形式。</p>
-<p>所以液态镜头就是在两块玻璃板之间，夹着一滴水和一滴油，在没有电场的时候，水滴和油滴都处于松弛状态，此时充当“镜片”的油滴是一个凹透镜。</p>
-<p>而当我们施加了一定的电压之后，右侧电极的金属表面变得更加<strong>亲水</strong>，于是就把更多的水吸引到镜头的边缘，也就是镜头中间的水会变少，此时油滴自然而然地就会变成一个<strong>边缘薄</strong>，<strong>中间厚</strong>地凸透镜，其曲率半径以及焦点地位置都会随之发生变化。</p>
-<p>目前世界上最大的制造液态镜头的公司是<a target="_blank" rel="noopener" href="http://varioptic.com/en/products.html">Varioptic</a>，镜头的外形类似于一个小金属按钮，电极的触点则是在镜头的前后两侧，所以通过把它夹在两块覆盖铜箔的电路板之间就可以对它进行供电。</p>
-<img src="/2021/01/31/introduction-of-liquid-lens/liquid-lens-appearance.png" class="" title="liquid-lens-appearance.png">
+<h1 id="启动GDB-Server"><a href="#启动GDB-Server" class="headerlink" title="启动GDB Server"></a>启动GDB Server</h1><p>假设我们基于X86架构调试，那么编译出的内核镜像通常是<strong>bzImage</strong>，我们可以尝试使用如下命令启动内核，因为并没有指定根文件系统，所以内核会在挂载root目录时panic。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -nographic -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -append <span class="string">&#x27;console=ttyS0&#x27;</span></span><br></pre></td></tr></table></figure>
 
-<p>要驱动这个镜头需要比较高的电压，并且需要专用的芯片来驱动：HV892，这款芯片来自于Supertex。我们需要通过IIC来控制它。所以使用Arduino作为驱动板。</p>
-<img src="/2021/01/31/introduction-of-liquid-lens/liquid-lens-driver.png" class="" title="liquid-lens-driver.png">
+<p>要启动QEMU内置的GDB Server，我们需要使用2个额外的参数</p>
+<ul>
+<li><code>-s</code>: Do not start CPU at startup</li>
+<li><code>-S</code>: Open a gdbserver on TCP port 1234</li>
+</ul>
+<p>第一个参数的目的是让我们能够在CPU启动之前连接GDB Server，而第二个参数则是启动GDB Server。</p>
+<p>此外，我们还需要添加一个内核cmdline参数<code>nokaslr</code>来关闭内核地址随机化，否则我们打断点的地址与实际执行的地址将不一致，从而导致断点失效。</p>
+<p>于是，最终的命令为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -nographic -s -S -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -append <span class="string">&#x27;console=ttyS0 nokaslr&#x27;</span></span><br></pre></td></tr></table></figure>
 
-<p>液态镜头相较于传统的机械对焦镜头的优势就是体积小，对焦速度快，对焦范围大。比如在生产线上识别条形码的时候，不同高度的货品通过时需要连续地快速精确对焦。</p>
-<img src="/2021/01/31/introduction-of-liquid-lens/liquid-lens-animation.gif" class="" title="liquid-lens-animation.gif">
+<p>执行命令后，我们会发现QEMU没有任何输出，因为此时虚拟机的CPU还未启动，接下来，我们将在GDB中完成后续工作。</p>
+<h1 id="GDB调试"><a href="#GDB调试" class="headerlink" title="GDB调试"></a>GDB调试</h1><p>在内核源码根目录执行<code>gdb</code>命令进入GDB shell。</p>
+<p>首先连接到QEMU的GDB Server，默认端口是<code>1234</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) file vmlinux</span><br><span class="line">(gdb) add-auto-load-safe-path $(pwd)</span><br><span class="line">(gdb) target remote localhost:1234</span><br></pre></td></tr></table></figure>
 
+<p>然后我们设置断点，以<code>start_kernel</code>函数为例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) break start_kernel</span><br></pre></td></tr></table></figure>
+
+<p>最后，我们通过GDB控制QEMU继续执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) continue</span><br></pre></td></tr></table></figure>
+
+<p>我们将看到QEMU继续执行，并在<code>start_kernel</code>处停下来，等待GDB的命令。之后的调试方式与常规用户态的调试大同小异。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11408041/how-to-debug-the-linux-kernel-with-gdb-and-qemu?_gl=1*1x1uq6h*_ga*MjA1NzM2MTc3LjE2NTUzNjY3NTA.*_ga_S812YQPLT2*MTY2NDE4MzI0NS40LjEuMTY2NDE4MzMxMS4wLjAuMA">How to debug the Linux kernel with GDB and QEMU?</a></p>
 
     </div>
 
@@ -307,22 +315,20 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/liquid/" rel="tag"># liquid</a>
-              <a href="/tags/lens/" rel="tag"># lens</a>
+              <a href="/tags/qemu/" rel="tag"># qemu</a>
+              <a href="/tags/kernel/" rel="tag"># kernel</a>
+              <a href="/tags/debug/" rel="tag"># debug</a>
           </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2021/01/30/install-cross-toolchain-for-arm.html" rel="prev" title="安装Arm交叉编译工具链">
-                  <i class="fa fa-chevron-left"></i> 安装Arm交叉编译工具链
+                <a href="/2023/01/27/play-ns-games-on-yuzu.html" rel="prev" title="使用Yuzu游玩Switch游戏">
+                  <i class="fa fa-chevron-left"></i> 使用Yuzu游玩Switch游戏
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2021/02/02/interpretation-of-fund-and-my-practice.html" rel="next" title="解读基金——我的投资观与实践">
-                  解读基金——我的投资观与实践 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>
@@ -384,7 +390,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
 
-<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"colorfulshark","repo":"colorfulshark.github.io","client_id":"be1f8797df56b50805c6","client_secret":"c71e3d4db1cbda57e39a3fd1ae7f306519632948","admin_user":"colorfulshark","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"99931967fc89ac3f3b450d02eaf2eb8c"}</script>
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"colorfulshark","repo":"colorfulshark.github.io","client_id":"be1f8797df56b50805c6","client_secret":"c71e3d4db1cbda57e39a3fd1ae7f306519632948","admin_user":"colorfulshark","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"b76945c200a563032d41868b496fdf6a"}</script>
 <script src="/js/third-party/comments/gitalk.js"></script>
 
 </body>
