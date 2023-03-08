@@ -3877,4 +3877,110 @@ Windows 平台
         <tag>ssd</tag>
       </tags>
   </entry>
+  <entry>
+    <title>使用Syncthing和FileRun搭建私人云盘</title>
+    <url>/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html</url>
+    <content><![CDATA[<blockquote>
+<p>入手NAS之后，我一直使用NextCloud + IPv6远程管理其中的文件，以及同步备份手机和电脑的数据。由于在北京租房，所以NAS被放在了父母家，这就导致当想要下载一些大文件时，即使是直连，也需要等很久。因而打算设计一个新的架构，用来解决这个问题。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="问题和诉求"><a href="#问题和诉求" class="headerlink" title="问题和诉求"></a>问题和诉求</h1><p>目前的问题主要有3个：</p>
+<ol>
+<li>使用IPv6 + DDNS远程访问NAS并不稳定，有时遇到IP变换，或者所在网络不支持IPv6，数据便无法访问。</li>
+<li>虽然NAS上使用ZFS组了软RAID1，但毕竟两块硬盘是在同一台机器上，一旦机器损坏，可能丢失所有数据。</li>
+<li>有时，我会通过终端直接下载或复制一些文件到NAS中，但NextCloud并不能立即识别那些文件，必须手动更新数据库。</li>
+</ol>
+<p>基于以上问题，我明确了下面3个诉求：</p>
+<ol>
+<li>我需要在本地也保留一份完整的数据。</li>
+<li>文件管理程序必须能够自动识别新文件。</li>
+<li>本地数据和NAS中的数据必须保持一致.</li>
+</ol>
+<h1 id="新方案"><a href="#新方案" class="headerlink" title="新方案"></a>新方案</h1><p>经过搜索，我发现有两款软件可以满足我的需求：</p>
+<ul>
+<li><a href="https://filerun.com/">FileRun</a>：基于LAMP架构的Web文件管理器，可实时显示文件变化</li>
+<li><a href="https://syncthing.net/">Syncthing</a>：集群文件存储工具，可在多台机器上同步文件</li>
+</ul>
+<h1 id="安装部署"><a href="#安装部署" class="headerlink" title="安装部署"></a>安装部署</h1><h2 id="FileRun"><a href="#FileRun" class="headerlink" title="FileRun"></a>FileRun</h2><p>与NextCloud一样，FileRun也是一个基于LAMP架构的项目，因此安装部署的步骤相似。不同之处在于，它不需要重新扫描，就可以立即识别新文件，这大大提高了文件管理的灵活性。</p>
+<ol>
+<li><p>安装Apache、MySQL和PHP</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install apache2 mariadb-server php libapache2-mod-php php-mysql php-mbstring php-zip php-curl php-gd php-ldap php-xml php-imagick</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置数据库，注意修改用户密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo mysql</span><br><span class="line">CREATE DATABASE filerun;</span><br><span class="line">CREATE USER &#x27;filerun&#x27;@&#x27;localhost&#x27; IDENTIFIED BY &#x27;YOUR-DB-PASSWORD&#x27;;</span><br><span class="line">GRANT ALL ON filerun.* TO &#x27;filerun&#x27;@&#x27;localhost&#x27;;</span><br><span class="line">FLUSH PRIVILEGES;</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置PHP</p>
+<ul>
+<li>安装ionCube  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz</span><br><span class="line">sudo tar -xzf ioncube_loaders_lin_x86-64.tar.gz -C /usr/lib/php</span><br><span class="line">sudo vim /etc/php/7.4/apache2/conf.d/00-ioncube.ini</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">zend_extension = /usr/lib/php/ioncube/ioncube_loader_lin_7.4.so</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure></li>
+<li>创建基础配置  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo vim /etc/php/7.4/apache2/conf.d/filerun.ini</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">expose_php              = Off  </span><br><span class="line">error_reporting         = E_ALL &amp; ~E_NOTICE  </span><br><span class="line">display_errors          = Off  </span><br><span class="line">display_startup_errors  = Off  </span><br><span class="line">log_errors              = On  </span><br><span class="line">ignore_repeated_errors  = Off  </span><br><span class="line">allow_url_fopen         = On  </span><br><span class="line">allow_url_include       = Off  </span><br><span class="line">variables_order         = &quot;GPCS&quot;  </span><br><span class="line">allow_webdav_methods    = On  </span><br><span class="line">memory_limit            = 128M  </span><br><span class="line">max_execution_time      = 300  </span><br><span class="line">output_buffering        = Off  </span><br><span class="line">output_handler          = &quot;&quot;  </span><br><span class="line">zlib.output_compression = Off  </span><br><span class="line">zlib.output_handler     = &quot;&quot;  </span><br><span class="line">safe_mode               = Off  </span><br><span class="line">register_globals        = Off  </span><br><span class="line">magic_quotes_gpc        = Off  </span><br><span class="line">upload_max_filesize     = 20M  </span><br><span class="line">post_max_size           = 20M  </span><br><span class="line">enable_dl               = Off  </span><br><span class="line">disable_functions       = &quot;&quot;  </span><br><span class="line">disable_classes         = &quot;&quot;  </span><br><span class="line">session.save_handler     = files  </span><br><span class="line">session.use_cookies      = 1  </span><br><span class="line">session.use_only_cookies = 1  </span><br><span class="line">session.auto_start       = 0  </span><br><span class="line">session.cookie_lifetime  = 0  </span><br><span class="line">session.cookie_httponly  = 1  </span><br><span class="line">date.timezone            = &quot;UTC&quot; </span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>配置Apache</p>
+ <div class="tabs" id="apache_config"><ul class="nav-tabs"><li class="tab active"><a href="#apache_config-1">http</a></li><li class="tab"><a href="#apache_config-2">https</a></li></ul><div class="tab-content"><div class="tab-pane active" id="apache_config-1"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo vim /etc/apache2/sites-available/filerun.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">        ServerAdmin webmaster@localhost</span><br><span class="line">        DocumentRoot /var/www/filerun</span><br><span class="line"></span><br><span class="line">        ErrorLog $&#123;APACHE_LOG_DIR&#125;/error.log</span><br><span class="line">        CustomLog $&#123;APACHE_LOG_DIR&#125;/access.log combined</span><br><span class="line">&lt;/VirtualHost&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo a2ensite filerun.conf</span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="apache_config-2"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">openssl req -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out filerun.crt -keyout filerun.key</span><br><span class="line">sudo mv filerun.crt /etc/ssl/certs/</span><br><span class="line">sudo mv filerun.key /etc/ssl/private/</span><br><span class="line"></span><br><span class="line">sudo a2enmod rewrite headers env dir mime ssl</span><br><span class="line">sudo vim /etc/apache2/sites-available/filerun.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;IfModule mod_ssl.c&gt;</span><br><span class="line">        &lt;VirtualHost _default_:443&gt;</span><br><span class="line">                ServerName nas.colorfulshark.net</span><br><span class="line"></span><br><span class="line">                &lt;IfModule mod_headers.c&gt;</span><br><span class="line">                        Header always set Strict-Transport-Security &quot;max-age=15552000; includeSubDomains&quot;</span><br><span class="line">                &lt;/IfModule&gt;</span><br><span class="line"></span><br><span class="line">                DocumentRoot /var/www/filerun</span><br><span class="line"></span><br><span class="line">                ErrorLog $&#123;APACHE_LOG_DIR&#125;/error.log</span><br><span class="line">                CustomLog $&#123;APACHE_LOG_DIR&#125;/access.log combined</span><br><span class="line"></span><br><span class="line">                SSLEngine on</span><br><span class="line"></span><br><span class="line">                SSLCertificateFile      /etc/ssl/certs/filerun.crt</span><br><span class="line">                SSLCertificateKeyFile /etc/ssl/private/filerun.key</span><br><span class="line"></span><br><span class="line">                &lt;FilesMatch &quot;\.(cgi|shtml|phtml|php)$&quot;&gt;</span><br><span class="line">                                SSLOptions +StdEnvVars</span><br><span class="line">                &lt;/FilesMatch&gt;</span><br><span class="line">                &lt;Directory /usr/lib/cgi-bin&gt;</span><br><span class="line">                                SSLOptions +StdEnvVars</span><br><span class="line">                &lt;/Directory&gt;</span><br><span class="line">        &lt;/VirtualHost&gt;</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo a2ensite filerun.conf</span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></div></div></div>
+</li>
+<li><p>安装FileRun</p>
+ <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www</span><br><span class="line">sudo mkdir filerun &amp;&amp; cd filerun</span><br><span class="line">sudo wget -O FileRun.zip https://filerun.com/download-latest-ubuntu-20</span><br><span class="line">sudo unzip FileRun.zip</span><br><span class="line">sudo chown -R www-data:www-data /var/www/filerun</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置FileRun</p>
+<p>在浏览器中打开<a href="http://ip/">http://IP</a>（http）或者<a href="https://ip/">https://IP</a>（https），即可打开FileRun的配置向导，在页面中完成配置即可。</p>
+</li>
+</ol>
+<h2 id="Syncthing"><a href="#Syncthing" class="headerlink" title="Syncthing"></a>Syncthing</h2><p>Syncthing的功能非常简单：在两台机器之间同步目录。但同时，它又是目前我所知道的最强大的同步工具。</p>
+<p>当我们想要在两台机器上同步数据时，往往最麻烦的地方不是如何配置同步策略，减少冲突，而是如何让两台机器连通。如果是局域网，我们可能只需要手动设置IP；但到了广域网，想要连通两台机器通常是非常困难的，往往需要一台具备公网IP的中转服务器作为桥梁。而Syncthing则如魔法般，把上面所说的步骤全部抹除了，两台机器在弹指一挥间，就自动完成了连接，无论它们身处何方。</p>
+<p>那么Syncthing是如何做到的呢？这其实得益于它强大的网络探测功能。根据两台设备之间连接方式的不同，Syncthing会做如下处理：</p>
+<ul>
+<li>局域网：自动探测对方设备，IP互换，完成连接，此时不需要设备连接互联网。</li>
+<li>互联网：<ul>
+<li>具备公网IP：只要任意一台机器具备且22000端口开放，两台机器将使用公网IP直连。</li>
+<li>NAT网络：尝试使用UDP进行打洞，实现内网穿透，任意一台机器穿透成功，即可直连。</li>
+<li>以上方案均失败：使用Relay桥接服务器，这些服务器通常是公用的，因此速度较慢。</li>
+</ul>
+</li>
+</ul>
+<p>目前国内的运营商大多不再提供公网IPv4地址，取而代之的是公网IPv6地址。经过测试，使用IPv6并且开放22000端口后，是可以顺利连接的。</p>
+<p>即使没有IPv6，Syncthing也会尝试UDP打洞，经过测试，成功率还是非常高的，即使是公司的WiFi网络，也能成功实现公网直连。</p>
+<ol>
+<li><p>配置Syncthing源</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo curl -o /usr/share/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg</span><br><span class="line">echo &quot;deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable&quot; | sudo tee /etc/apt/sources.list.d/syncthing.list</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>安装Syncthing</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install syncthing</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Syncthing，主要是将服务监听IP改成0.0.0.0</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo mkdir /var/www/.config</span><br><span class="line">sudo chown www-data:www-data /var/www/.config</span><br><span class="line">sudo systemctl enable syncthing@www-data</span><br><span class="line">sudo systemctl start syncthing@www-data</span><br><span class="line"></span><br><span class="line">vim /var/www/.config/syncthing/config.xml</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;address&gt;127.0.0.1:8384&lt;/address&gt; =&gt; &lt;address&gt;0.0.0.0:8384&lt;/address&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以通过<a href="http://ip:8384/">http://IP:8384</a>访问Syncthing的管理页面了。</p>
+</li>
+</ol>
+<p>要用好Syncthing，需要深入理解它的同步逻辑。在Syncthing中，每一台机器对应一个<strong>Device ID</strong>，同步的最小单位是<strong>Folder</strong>，使用<strong>Folder ID</strong>标识，因此一个具体的<strong>Folder</strong>可以标定为<code>[Device ID]:[Folder ID]</code>。</p>
+<p>Syncthing会保证你的设备ID是独一无二的，要连接两台机器，需要各自添加对方的ID，只有一方添加ID是不会建立连接的，所以ID并不需要保密。</p>
+<p>若要在2台设备之间同步目录，首先要建立设备间的连接，然后在两台设备上各自创建共享目录，并共享给对方。</p>
+<p>创建共享目录时，可以参考以下建议，以达到比较好的效果：</p>
+<ol>
+<li>启用Trash Can File Versioning：这可以防止文件在一台机器上被误删除后，其它机器也跟着删除。自动清理时间可以设置为30天。</li>
+<li>Ignore Patterns设置为<code>.*</code>：这可以忽略隐藏文件，因为这些文件通常是临时文件。</li>
+<li>Full Rescan Interval设置为0：这在安卓手机上非常实用，可以节约电量，因为手机在切换网络时，Syncthing会重启，而这会强制重新扫描。</li>
+<li>启用Ignore Permissions：我们通常不太关心文件权限的变化，忽略它也可以降低同步频率。</li>
+</ol>
+<h1 id="最终效果"><a href="#最终效果" class="headerlink" title="最终效果"></a>最终效果</h1><p>两台主同步设备拥有全部的文件，互为备份，而手机则选择性地与之同步，最终实现数据的异地防灾。</p>
+<img src="/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun/syncthing.png" class="">
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://docs.filerun.com/filerun_install_guide">FileRun Server Install Guides</a></p>
+<p><a href="http://blog.filerun.com/how-to-install-filerun-on-ubuntu-20/">How to install FileRun on Ubuntu 20</a></p>
+<p><a href="https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-20-04">How To Install Linux, Apache, MySQL, PHP (LAMP) stack on Ubuntu 20.04</a></p>
+<p><a href="https://docs.filerun.com/webdav">Accessing via WebDAV</a></p>
+<p><a href="https://apt.syncthing.net/">https://apt.syncthing.net/</a></p>
+<p><a href="https://docs.syncthing.net/intro/getting-started.html#getting-started">Syncthing Getting Started</a></p>
+]]></content>
+      <categories>
+        <category>Geek</category>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>nas</tag>
+        <tag>syncthing</tag>
+        <tag>filerun</tag>
+      </tags>
+  </entry>
 </search>

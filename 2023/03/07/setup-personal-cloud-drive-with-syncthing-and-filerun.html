@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.1","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="入手NAS之后，我一直使用NextCloud + IPv6远程管理其中的文件，以及同步备份手机和电脑的数据。由于在北京租房，所以NAS被放在了父母家，这就导致当想要下载一些大文件时，即使是直连，也需要等很久。因而打算设计一个新的架构，用来解决这个问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Syncthing和FileRun搭建私人云盘">
+<meta property="og:url" content="https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="入手NAS之后，我一直使用NextCloud + IPv6远程管理其中的文件，以及同步备份手机和电脑的数据。由于在北京租房，所以NAS被放在了父母家，这就导致当想要下载一些大文件时，即使是直连，也需要等很久。因而打算设计一个新的架构，用来解决这个问题。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun/syncthing.png">
+<meta property="article:published_time" content="2023-03-07T14:33:17.000Z">
+<meta property="article:modified_time" content="2023-03-08T16:06:25.080Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="nas">
+<meta property="article:tag" content="syncthing">
+<meta property="article:tag" content="filerun">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun/syncthing.png">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html","path":"2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html","title":"使用Syncthing和FileRun搭建私人云盘"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用Syncthing和FileRun搭建私人云盘 | colorfulshark</title>
+  
+
+
+
+
+
+
+  <script async defer data-website-id="" src=""></script>
+
+  <script defer data-domain="" src=""></script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">76</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">11</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%92%8C%E8%AF%89%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text">问题和诉求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B0%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">新方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2"><span class="nav-number">3.</span> <span class="nav-text">安装部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#FileRun"><span class="nav-number">3.1.</span> <span class="nav-text">FileRun</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Syncthing"><span class="nav-number">3.2.</span> <span class="nav-text">Syncthing</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C"><span class="nav-number">4.</span> <span class="nav-text">最终效果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">54</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用Syncthing和FileRun搭建私人云盘 | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用Syncthing和FileRun搭建私人云盘
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-03-07 22:33:17" itemprop="dateCreated datePublished" datetime="2023-03-07T22:33:17+08:00">2023-03-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2023-03-09 00:06:25" itemprop="dateModified" datetime="2023-03-09T00:06:25+08:00">2023-03-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Geek/" itemprop="url" rel="index"><span itemprop="name">Geek</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/How-To/" itemprop="url" rel="index"><span itemprop="name">How-To</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>入手NAS之后，我一直使用NextCloud + IPv6远程管理其中的文件，以及同步备份手机和电脑的数据。由于在北京租房，所以NAS被放在了父母家，这就导致当想要下载一些大文件时，即使是直连，也需要等很久。因而打算设计一个新的架构，用来解决这个问题。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="问题和诉求"><a href="#问题和诉求" class="headerlink" title="问题和诉求"></a>问题和诉求</h1><p>目前的问题主要有3个：</p>
+<ol>
+<li>使用IPv6 + DDNS远程访问NAS并不稳定，有时遇到IP变换，或者所在网络不支持IPv6，数据便无法访问。</li>
+<li>虽然NAS上使用ZFS组了软RAID1，但毕竟两块硬盘是在同一台机器上，一旦机器损坏，可能丢失所有数据。</li>
+<li>有时，我会通过终端直接下载或复制一些文件到NAS中，但NextCloud并不能立即识别那些文件，必须手动更新数据库。</li>
+</ol>
+<p>基于以上问题，我明确了下面3个诉求：</p>
+<ol>
+<li>我需要在本地也保留一份完整的数据。</li>
+<li>文件管理程序必须能够自动识别新文件。</li>
+<li>本地数据和NAS中的数据必须保持一致.</li>
+</ol>
+<h1 id="新方案"><a href="#新方案" class="headerlink" title="新方案"></a>新方案</h1><p>经过搜索，我发现有两款软件可以满足我的需求：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://filerun.com/">FileRun</a>：基于LAMP架构的Web文件管理器，可实时显示文件变化</li>
+<li><a target="_blank" rel="noopener" href="https://syncthing.net/">Syncthing</a>：集群文件存储工具，可在多台机器上同步文件</li>
+</ul>
+<h1 id="安装部署"><a href="#安装部署" class="headerlink" title="安装部署"></a>安装部署</h1><h2 id="FileRun"><a href="#FileRun" class="headerlink" title="FileRun"></a>FileRun</h2><p>与NextCloud一样，FileRun也是一个基于LAMP架构的项目，因此安装部署的步骤相似。不同之处在于，它不需要重新扫描，就可以立即识别新文件，这大大提高了文件管理的灵活性。</p>
+<ol>
+<li><p>安装Apache、MySQL和PHP</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install apache2 mariadb-server php libapache2-mod-php php-mysql php-mbstring php-zip php-curl php-gd php-ldap php-xml php-imagick</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置数据库，注意修改用户密码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sudo mysql</span><br><span class="line">CREATE DATABASE filerun;</span><br><span class="line">CREATE USER &#x27;filerun&#x27;@&#x27;localhost&#x27; IDENTIFIED BY &#x27;YOUR-DB-PASSWORD&#x27;;</span><br><span class="line">GRANT ALL ON filerun.* TO &#x27;filerun&#x27;@&#x27;localhost&#x27;;</span><br><span class="line">FLUSH PRIVILEGES;</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置PHP</p>
+<ul>
+<li>安装ionCube  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">wget https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz</span><br><span class="line">sudo tar -xzf ioncube_loaders_lin_x86-64.tar.gz -C /usr/lib/php</span><br><span class="line">sudo vim /etc/php/7.4/apache2/conf.d/00-ioncube.ini</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">zend_extension = /usr/lib/php/ioncube/ioncube_loader_lin_7.4.so</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure></li>
+<li>创建基础配置  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/php/7.4/apache2/conf.d/filerun.ini</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">expose_php              = Off  </span><br><span class="line">error_reporting         = E_ALL &amp; ~E_NOTICE  </span><br><span class="line">display_errors          = Off  </span><br><span class="line">display_startup_errors  = Off  </span><br><span class="line">log_errors              = On  </span><br><span class="line">ignore_repeated_errors  = Off  </span><br><span class="line">allow_url_fopen         = On  </span><br><span class="line">allow_url_include       = Off  </span><br><span class="line">variables_order         = &quot;GPCS&quot;  </span><br><span class="line">allow_webdav_methods    = On  </span><br><span class="line">memory_limit            = 128M  </span><br><span class="line">max_execution_time      = 300  </span><br><span class="line">output_buffering        = Off  </span><br><span class="line">output_handler          = &quot;&quot;  </span><br><span class="line">zlib.output_compression = Off  </span><br><span class="line">zlib.output_handler     = &quot;&quot;  </span><br><span class="line">safe_mode               = Off  </span><br><span class="line">register_globals        = Off  </span><br><span class="line">magic_quotes_gpc        = Off  </span><br><span class="line">upload_max_filesize     = 20M  </span><br><span class="line">post_max_size           = 20M  </span><br><span class="line">enable_dl               = Off  </span><br><span class="line">disable_functions       = &quot;&quot;  </span><br><span class="line">disable_classes         = &quot;&quot;  </span><br><span class="line">session.save_handler     = files  </span><br><span class="line">session.use_cookies      = 1  </span><br><span class="line">session.use_only_cookies = 1  </span><br><span class="line">session.auto_start       = 0  </span><br><span class="line">session.cookie_lifetime  = 0  </span><br><span class="line">session.cookie_httponly  = 1  </span><br><span class="line">date.timezone            = &quot;UTC&quot; </span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>配置Apache</p>
+ <div class="tabs" id="apache_config"><ul class="nav-tabs"><li class="tab active"><a href="#apache_config-1">http</a></li><li class="tab"><a href="#apache_config-2">https</a></li></ul><div class="tab-content"><div class="tab-pane active" id="apache_config-1"><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/apache2/sites-available/filerun.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">        ServerAdmin webmaster@localhost</span><br><span class="line">        DocumentRoot /var/www/filerun</span><br><span class="line"></span><br><span class="line">        ErrorLog $&#123;APACHE_LOG_DIR&#125;/error.log</span><br><span class="line">        CustomLog $&#123;APACHE_LOG_DIR&#125;/access.log combined</span><br><span class="line">&lt;/VirtualHost&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo a2ensite filerun.conf</span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="apache_config-2"><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">openssl req -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out filerun.crt -keyout filerun.key</span><br><span class="line">sudo mv filerun.crt /etc/ssl/certs/</span><br><span class="line">sudo mv filerun.key /etc/ssl/private/</span><br><span class="line"></span><br><span class="line">sudo a2enmod rewrite headers env dir mime ssl</span><br><span class="line">sudo vim /etc/apache2/sites-available/filerun.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;IfModule mod_ssl.c&gt;</span><br><span class="line">        &lt;VirtualHost _default_:443&gt;</span><br><span class="line">                ServerName nas.colorfulshark.net</span><br><span class="line"></span><br><span class="line">                &lt;IfModule mod_headers.c&gt;</span><br><span class="line">                        Header always set Strict-Transport-Security &quot;max-age=15552000; includeSubDomains&quot;</span><br><span class="line">                &lt;/IfModule&gt;</span><br><span class="line"></span><br><span class="line">                DocumentRoot /var/www/filerun</span><br><span class="line"></span><br><span class="line">                ErrorLog $&#123;APACHE_LOG_DIR&#125;/error.log</span><br><span class="line">                CustomLog $&#123;APACHE_LOG_DIR&#125;/access.log combined</span><br><span class="line"></span><br><span class="line">                SSLEngine on</span><br><span class="line"></span><br><span class="line">                SSLCertificateFile      /etc/ssl/certs/filerun.crt</span><br><span class="line">                SSLCertificateKeyFile /etc/ssl/private/filerun.key</span><br><span class="line"></span><br><span class="line">                &lt;FilesMatch &quot;\.(cgi|shtml|phtml|php)$&quot;&gt;</span><br><span class="line">                                SSLOptions +StdEnvVars</span><br><span class="line">                &lt;/FilesMatch&gt;</span><br><span class="line">                &lt;Directory /usr/lib/cgi-bin&gt;</span><br><span class="line">                                SSLOptions +StdEnvVars</span><br><span class="line">                &lt;/Directory&gt;</span><br><span class="line">        &lt;/VirtualHost&gt;</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line"></span><br><span class="line">sudo a2ensite filerun.conf</span><br><span class="line">sudo systemctl restart apache2</span><br></pre></td></tr></table></figure></div></div></div>
+</li>
+<li><p>安装FileRun</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd /var/www</span><br><span class="line">sudo mkdir filerun &amp;&amp; cd filerun</span><br><span class="line">sudo wget -O FileRun.zip https://filerun.com/download-latest-ubuntu-20</span><br><span class="line">sudo unzip FileRun.zip</span><br><span class="line">sudo chown -R www-data:www-data /var/www/filerun</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置FileRun</p>
+<p>在浏览器中打开<a target="_blank" rel="noopener" href="http://ip/">http://IP</a>（http）或者<a target="_blank" rel="noopener" href="https://ip/">https://IP</a>（https），即可打开FileRun的配置向导，在页面中完成配置即可。</p>
+</li>
+</ol>
+<h2 id="Syncthing"><a href="#Syncthing" class="headerlink" title="Syncthing"></a>Syncthing</h2><p>Syncthing的功能非常简单：在两台机器之间同步目录。但同时，它又是目前我所知道的最强大的同步工具。</p>
+<p>当我们想要在两台机器上同步数据时，往往最麻烦的地方不是如何配置同步策略，减少冲突，而是如何让两台机器连通。如果是局域网，我们可能只需要手动设置IP；但到了广域网，想要连通两台机器通常是非常困难的，往往需要一台具备公网IP的中转服务器作为桥梁。而Syncthing则如魔法般，把上面所说的步骤全部抹除了，两台机器在弹指一挥间，就自动完成了连接，无论它们身处何方。</p>
+<p>那么Syncthing是如何做到的呢？这其实得益于它强大的网络探测功能。根据两台设备之间连接方式的不同，Syncthing会做如下处理：</p>
+<ul>
+<li>局域网：自动探测对方设备，IP互换，完成连接，此时不需要设备连接互联网。</li>
+<li>互联网：<ul>
+<li>具备公网IP：只要任意一台机器具备且22000端口开放，两台机器将使用公网IP直连。</li>
+<li>NAT网络：尝试使用UDP进行打洞，实现内网穿透，任意一台机器穿透成功，即可直连。</li>
+<li>以上方案均失败：使用Relay桥接服务器，这些服务器通常是公用的，因此速度较慢。</li>
+</ul>
+</li>
+</ul>
+<p>目前国内的运营商大多不再提供公网IPv4地址，取而代之的是公网IPv6地址。经过测试，使用IPv6并且开放22000端口后，是可以顺利连接的。</p>
+<p>即使没有IPv6，Syncthing也会尝试UDP打洞，经过测试，成功率还是非常高的，即使是公司的WiFi网络，也能成功实现公网直连。</p>
+<ol>
+<li><p>配置Syncthing源</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo curl -o /usr/share/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg</span><br><span class="line">echo &quot;deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable&quot; | sudo tee /etc/apt/sources.list.d/syncthing.list</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>安装Syncthing</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install syncthing</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Syncthing，主要是将服务监听IP改成0.0.0.0</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir /var/www/.config</span><br><span class="line">sudo chown www-data:www-data /var/www/.config</span><br><span class="line">sudo systemctl enable syncthing@www-data</span><br><span class="line">sudo systemctl start syncthing@www-data</span><br><span class="line"></span><br><span class="line">vim /var/www/.config/syncthing/config.xml</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;address&gt;127.0.0.1:8384&lt;/address&gt; =&gt; &lt;address&gt;0.0.0.0:8384&lt;/address&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以通过<a target="_blank" rel="noopener" href="http://ip:8384/">http://IP:8384</a>访问Syncthing的管理页面了。</p>
+</li>
+</ol>
+<p>要用好Syncthing，需要深入理解它的同步逻辑。在Syncthing中，每一台机器对应一个<strong>Device ID</strong>，同步的最小单位是<strong>Folder</strong>，使用<strong>Folder ID</strong>标识，因此一个具体的<strong>Folder</strong>可以标定为<code>[Device ID]:[Folder ID]</code>。</p>
+<p>Syncthing会保证你的设备ID是独一无二的，要连接两台机器，需要各自添加对方的ID，只有一方添加ID是不会建立连接的，所以ID并不需要保密。</p>
+<p>若要在2台设备之间同步目录，首先要建立设备间的连接，然后在两台设备上各自创建共享目录，并共享给对方。</p>
+<p>创建共享目录时，可以参考以下建议，以达到比较好的效果：</p>
+<ol>
+<li>启用Trash Can File Versioning：这可以防止文件在一台机器上被误删除后，其它机器也跟着删除。自动清理时间可以设置为30天。</li>
+<li>Ignore Patterns设置为<code>.*</code>：这可以忽略隐藏文件，因为这些文件通常是临时文件。</li>
+<li>Full Rescan Interval设置为0：这在安卓手机上非常实用，可以节约电量，因为手机在切换网络时，Syncthing会重启，而这会强制重新扫描。</li>
+<li>启用Ignore Permissions：我们通常不太关心文件权限的变化，忽略它也可以降低同步频率。</li>
+</ol>
+<h1 id="最终效果"><a href="#最终效果" class="headerlink" title="最终效果"></a>最终效果</h1><p>两台主同步设备拥有全部的文件，互为备份，而手机则选择性地与之同步，最终实现数据的异地防灾。</p>
+<img src="/2023/03/07/setup-personal-cloud-drive-with-syncthing-and-filerun/syncthing.png" class="">
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://docs.filerun.com/filerun_install_guide">FileRun Server Install Guides</a></p>
+<p><a target="_blank" rel="noopener" href="http://blog.filerun.com/how-to-install-filerun-on-ubuntu-20/">How to install FileRun on Ubuntu 20</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-20-04">How To Install Linux, Apache, MySQL, PHP (LAMP) stack on Ubuntu 20.04</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.filerun.com/webdav">Accessing via WebDAV</a></p>
+<p><a target="_blank" rel="noopener" href="https://apt.syncthing.net/">https://apt.syncthing.net/</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.syncthing.net/intro/getting-started.html#getting-started">Syncthing Getting Started</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/nas/" rel="tag"># nas</a>
+              <a href="/tags/syncthing/" rel="tag"># syncthing</a>
+              <a href="/tags/filerun/" rel="tag"># filerun</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/01/30/emulate-ssd-in-qemu.html" rel="prev" title="在Qemu中虚拟化固态硬盘">
+                  <i class="fa fa-chevron-left"></i> 在Qemu中虚拟化固态硬盘
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"colorfulshark","repo":"colorfulshark.github.io","client_id":"be1f8797df56b50805c6","client_secret":"c71e3d4db1cbda57e39a3fd1ae7f306519632948","admin_user":"colorfulshark","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"4edb32049a8ed6fe488f4e45b39b180d"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
