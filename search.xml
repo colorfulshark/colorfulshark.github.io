@@ -3947,7 +3947,8 @@ Windows 平台
 <li><p>安装Syncthing</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install syncthing</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>配置Syncthing，主要是将服务监听IP改成0.0.0.0</p>
+<li><p>配置Syncthing</p>
+<p>由于FileRun是使用<code>www-data</code>账户运行的，因此我们也使用该账户运行Synching，从而避免文件权限的问题。同时，将其监听IP改为0.0.0.0，这样就可以通过局域网IP访问。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo mkdir /var/www/.config</span><br><span class="line">sudo chown www-data:www-data /var/www/.config</span><br><span class="line">sudo systemctl enable syncthing@www-data</span><br><span class="line">sudo systemctl start syncthing@www-data</span><br><span class="line"></span><br><span class="line">vim /var/www/.config/syncthing/config.xml</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">&lt;address&gt;127.0.0.1:8384&lt;/address&gt; =&gt; &lt;address&gt;0.0.0.0:8384&lt;/address&gt;</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure>
 
 <p>然后就可以通过<a href="http://ip:8384/">http://IP:8384</a>访问Syncthing的管理页面了。</p>
