@@ -3984,4 +3984,58 @@ Windows 平台
         <tag>filerun</tag>
       </tags>
   </entry>
+  <entry>
+    <title>在PVE中安装群晖DSM系统</title>
+    <url>/2023/03/10/install-dsm-on-pve.html</url>
+    <content><![CDATA[<blockquote>
+<p>其实我一直对群晖的系统不太感冒，一方面它是闭源的，我无法得知它里面有多少未修复的漏洞以及后门；另一方面，即使硬件已经有了超高的溢价，群晖的套件也没有想象中那么好用，App总感觉就是半成品，系统与数据混在一起，这些因素决定了我注定不会是群晖的受众。但有钱能使鬼推磨，网心云发布了基于群晖的PCDN业务，并且看起来收益要优于Docker业务，于是，我也开始折腾起黑群晖了。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="创建虚拟机"><a href="#创建虚拟机" class="headerlink" title="创建虚拟机"></a>创建虚拟机</h1><p>在PVE中创建一个标准的虚拟机，注意以下几点：</p>
+<ol>
+<li>在第二步<strong>OS</strong>中，选择<code>Do not use any media</code>。</li>
+<li>在第4步<strong>Disks</strong>中，删除所有硬盘。</li>
+<li>第5步<strong>CPU</strong>中，Type选择<code>host</code>。</li>
+<li>第6步<strong>Memory</strong>中，至少设置4GB内存。</li>
+</ol>
+<h1 id="安装引导"><a href="#安装引导" class="headerlink" title="安装引导"></a>安装引导</h1><p>目前黑群晖主要是使用RedPill项目组开发的<a href="https://github.com/RedPill-TTG/redpill-load">RPL(RedPill Loader)</a>，放在以前，我们可能需要手动编译，还得设置正确的VID、PID、MAC等。但得益于<a href="https://github.com/fbelavenuto/arpl">ARPL(Automated Redpill Loader)</a>项目，现在只要在menuconfig中简单设置几个选项，就可以得到专用的Loader，并且能够兼容最新的DSM系统。</p>
+<p>ARPL本质上就是一个使用Ramfs的Linux系统，它里面配置了编译RPL所需的最小软件集。当我们启动ARPL的镜像后，就可以通过终端或者Web配置编译RPL，并且它会自动将RPL写入分区，并支持后续启动工作。</p>
+<p>因此，安装引导主要包括以下几个步骤：</p>
+<ol>
+<li><p>下载<a href="https://github.com/fbelavenuto/arpl/releases">ARPL镜像</a>并解压，例如</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">wget https://github.com/fbelavenuto/arpl/releases/download/v1.1-beta2a/arpl-1.1-beta2a.img.zip</span><br><span class="line"></span><br><span class="line">unzip arpl-1.1-beta2a.img.zip</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将ARPL以USB存储设备的方式挂载到虚拟机</p>
+<p>假设你的虚拟机编号是<code>200</code>，在第一行添加如下内容，注意<code>file=</code>后面需要使用ARPL镜像的绝对路径。</p>
+<div class="tabs" id="配置arpl引导文件"><ul class="nav-tabs"><li class="tab active"><a href="#配置arpl引导文件-1">使用镜像文件</a></li><li class="tab"><a href="#配置arpl引导文件-2">使用LVM分区</a></li></ul><div class="tab-content"><div class="tab-pane active" id="配置arpl引导文件-1"><p>假设我们将解压出的<code>arpl.img</code>放在<code>/root/arpl.img</code>，那么需要做如下配置</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv arpl.img /root/</span><br><span class="line"></span><br><span class="line">vim /etc/pve/qemu-server/200.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">args: -device &#x27;qemu-xhci,addr=0x18&#x27; -drive &#x27;id=synoboot,file=/root/arpl.img,if=none,format=raw&#x27; -device &#x27;usb-storage,id=synoboot,drive=synoboot,bootindex=1&#x27;</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt;&gt;</span></span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="配置arpl引导文件-2"><p>假设我们要使用LVM分区，那么需要做如下配置</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建一个新的LVM分区，假设你的VG是ssd，新的分区名为synoboot，新分区大小为1GiB</span></span><br><span class="line">lvcreate -L 1GB -n synoboot ssd</span><br><span class="line">dd if=./arpl.img of=/dev/ssd/synoboot</span><br><span class="line"></span><br><span class="line">vim /etc/pve/qemu-server/200.conf</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line">args: -device &#x27;qemu-xhci,addr=0x18&#x27; -drive &#x27;id=synoboot,file=/dev/ssd/synoboot,if=none,format=raw&#x27; -device &#x27;usb-storage,id=synoboot,drive=synoboot,bootindex=1&#x27;</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt;&gt;</span></span><br></pre></td></tr></table></figure></div></div></div>
+</li>
+<li><p>启动ARPL，配置相关选项，并启动系统</p>
+<div class="tabs" id="安装arpl流程"><ul class="nav-tabs"><li class="tab active"><a href="#安装arpl流程-1">1. 启动配置界面</a></li><li class="tab"><a href="#安装arpl流程-2">2. 选择机型</a></li><li class="tab"><a href="#安装arpl流程-3">3. 选择版本</a></li><li class="tab"><a href="#安装arpl流程-4">4. 编译</a></li><li class="tab"><a href="#安装arpl流程-5">5. 启动</a></li></ul><div class="tab-content"><div class="tab-pane active" id="安装arpl流程-1"><p>在终端输入<code>menu.sh</code>启动配置界面。</p>
+<img src="/2023/03/10/install-dsm-on-pve/first-screen.png" class=""></div><div class="tab-pane" id="安装arpl流程-2"><p>进入<code>Choose a model</code>选项，选择所需机型，通常选择<code>DS918+</code>。</p>
+<img src="/2023/03/10/install-dsm-on-pve/ttyd.png" class="">
+
+<img src="/2023/03/10/install-dsm-on-pve/model.png" class=""></div><div class="tab-pane" id="安装arpl流程-3"><p>直接选择最新版即可。</p>
+<img src="/2023/03/10/install-dsm-on-pve/buildnumber.png" class=""></div><div class="tab-pane" id="安装arpl流程-4"><p>选择<code>Build</code>，开始编译ARPL。</p>
+<img src="/2023/03/10/install-dsm-on-pve/making.png" class=""></div><div class="tab-pane" id="安装arpl流程-5"><p>选择<code>Boot</code>，启动引导程序。</p>
+<img src="/2023/03/10/install-dsm-on-pve/DSMboot.png" class=""></div></div></div></li>
+</ol>
+<h1 id="安装系统"><a href="#安装系统" class="headerlink" title="安装系统"></a>安装系统</h1><p>记录下终端上显示的IP，如<a href="192.168.0.2">192.168.0.2</a>，接着在浏览器中输入</p>
+<p><a href="http://192.168.0.2:5000/">http://192.168.0.2:5000</a></p>
+<p>即可进入DSM的安装界面。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://github.com/fbelavenuto/arpl/">ARPL Github</a></p>
+<p><a href="https://help.onethingcloud.com/caa9/a0fe/nasxx">纳思小星产品介绍（网心云NAS版）</a></p>
+<p><a href="https://docs.qq.com/doc/DQVJpbEVGZXV0anNa">NAS迅雷-群晖内测版下载地址和安装教程</a></p>
+]]></content>
+      <categories>
+        <category>Geek</category>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>pve</tag>
+        <tag>synology</tag>
+      </tags>
+  </entry>
 </search>
