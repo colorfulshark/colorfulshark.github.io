@@ -4038,4 +4038,63 @@ Windows 平台
         <tag>synology</tag>
       </tags>
   </entry>
+  <entry>
+    <title>在群辉中挂载NFS文件系统</title>
+    <url>/2024/01/21/mount-nfs-in-synology.html</url>
+    <content><![CDATA[<blockquote>
+<p>玩网心云的时候，在PVE中安装了一个黑群晖，但是并没有使用它管理任何数据，一方面盗版的东西可能不稳定，另一方面不想被某个生态捆绑。最重要的一点：我始终都是使用ZFS，而群晖并不支持ZFS。碰巧最近使用samba服务时遇到一些问题，因此打算研究一下能否把这个黑群晖利用起来。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h1><p>由于我所有的数据都是存储在PVE的ZFS中，因此我不能把硬盘直接透传给群晖，要想让群晖访问我现有的数据，主要有3个思路：</p>
+<ul>
+<li><strong>VirtFS</strong>: 这是一种基于virtio的文件系统，可以将host中的目录映射为guest中的块设备，用于挂载。</li>
+<li><strong>NFS</strong>: Linux上的网络文件系统，通过网络传输数据。</li>
+<li><strong>SMB</strong>: Windows上用于网络共享的传输协议，通过网络传输数据。</li>
+</ul>
+<p>理论上VirtFS拥有最好的性能，但是群晖中并没有官方支持，需要加载第三方驱动，并且需要在命令行中配置，稳定性是个未知数。</p>
+<p>SMB在Linux上虽然已经有很好的支持，但配置相对繁琐，尤其是那套独立的用户管理。</p>
+<p>而NFS相对来说配置较为简单，在群晖系统中也有良好的支持，因此我最终选择它作为群晖和PVE之间的桥梁。</p>
+<h1 id="NFS服务端配置"><a href="#NFS服务端配置" class="headerlink" title="NFS服务端配置"></a>NFS服务端配置</h1><p>NFS服务端主要有以下几个选项：</p>
+<ul>
+<li><strong>rw</strong>: 允许读写操作，否则文件系统将变为只读。</li>
+<li><strong>async</strong>: 在写入完成之前就返回，可以提高性能，但是可能导致文件损坏。</li>
+<li><strong>sync</strong>: 在写入完成之后才返回，可以保障写入按顺序执行，但会降低性能。</li>
+<li><strong>no_subtree_check</strong>: 只检查被访问文件的权限，忽略子文件的权限检查。</li>
+<li><strong>root_squash</strong>: 将client的root用户和root组映射为server的匿名用户和匿名组，从而限制client的文件访问权限。</li>
+<li><strong>no_root_squash</strong>: client的root用户和root组将映射为server的root用户和root组。</li>
+<li><strong>all_squash</strong>: 将client所有的用户和组都映射为server的匿名映射和匿名组。这样client上不同用户的访问可以被映射为同一个用户。</li>
+<li><strong>anonuid&#x2F;anongid</strong>: 设置匿名用户所对应的uid和gid。需要与<strong>root_squash</strong>或<strong>all_squash</strong>组合使用。</li>
+</ul>
+<p>为了不破坏ZFS中原有的文件owner信息，我需要使用<strong>all_squash</strong>配合<strong>anonuid&#x2F;anongid</strong>，将群晖中的用户映射为PVE中的www-data用户。因此配置为</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># /etc/exports</span></span><br><span class="line">/mnt  *(rw,<span class="built_in">sync</span>,all_squash,anonuid=33,anongid=33)</span><br></pre></td></tr></table></figure>
+
+<h1 id="群晖配置"><a href="#群晖配置" class="headerlink" title="群晖配置"></a>群晖配置</h1><h2 id="创建一个新的共享文件夹"><a href="#创建一个新的共享文件夹" class="headerlink" title="创建一个新的共享文件夹"></a>创建一个新的共享文件夹</h2><p>由于我们将要挂载的文件系统不一定兼容群晖内置的权限模型，因此需要在群晖中创建一个原生的目录，作为包含挂载点容器，后续所有的操作和共享都基于此目录。</p>
+<p><strong>控制面板-&gt;共享文件夹-&gt;新增-&gt;创建共享文件夹</strong></p>
+<img src="/2024/01/21/mount-nfs-in-synology/create_shared_folder.jpg" class="">
+
+<h2 id="挂载NFS"><a href="#挂载NFS" class="headerlink" title="挂载NFS"></a>挂载NFS</h2><p><strong>File Station-&gt;工具-&gt;装载远程文件夹-&gt;NFS共享文件夹</strong></p>
+<img src="/2024/01/21/mount-nfs-in-synology/mount_nfs_1.jpg" class="">
+<img src="/2024/01/21/mount-nfs-in-synology/mount_nfs_2.jpg" class="">
+
+<h2 id="设置App权限"><a href="#设置App权限" class="headerlink" title="设置App权限"></a>设置App权限</h2><p>在群晖中，需要为App配置目录的权限后，App才能访问。这里以Syncthing为例。</p>
+<p><strong>File Station-&gt;右键共享目录-&gt;属性-&gt;权限-&gt;新增</strong></p>
+<p>将App所对应的用户添加进去，并授予读写权限。</p>
+<img src="/2024/01/21/mount-nfs-in-synology/app_permission.jpg" class="">
+
+<h1 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h1><p>由于NFS的性能主要受限于网络性能，因此这里主要测试PVE和群晖间的网络吞吐，测试工具为iperf3，网卡驱动为virtio。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">server: iperf3 -s</span><br><span class="line">client: iperf3 -c &lt;SERVER_IP&gt;</span><br></pre></td></tr></table></figure>
+
+<p>从结果上来看，TCP吞吐接近20 Gbits&#x2F;sec，已经远远超过大多数硬盘的读写性能。</p>
+<img src="/2024/01/21/mount-nfs-in-synology/iperf_test.jpg" class="">
+]]></content>
+      <categories>
+        <category>Geek</category>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>pve</tag>
+        <tag>synology</tag>
+      </tags>
+  </entry>
 </search>
