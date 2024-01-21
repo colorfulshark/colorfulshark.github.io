@@ -4087,6 +4087,8 @@ Windows 平台
 
 <p>从结果上来看，TCP吞吐接近20 Gbits&#x2F;sec，已经远远超过大多数硬盘的读写性能。</p>
 <img src="/2024/01/21/mount-nfs-in-synology/iperf_test.jpg" class="">
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>利用这套方案，我既可以享受群晖套件所带来的便利，也可以将数据管理权掌握在自己手中，无需担心黑群晖系统崩溃后导致的数据丢失问题。</p>
 ]]></content>
       <categories>
         <category>Geek</category>
