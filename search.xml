@@ -4039,7 +4039,7 @@ Windows 平台
       </tags>
   </entry>
   <entry>
-    <title>在群辉中挂载NFS文件系统</title>
+    <title>在群晖中挂载NFS文件系统</title>
     <url>/2024/01/21/mount-nfs-in-synology.html</url>
     <content><![CDATA[<blockquote>
 <p>玩网心云的时候，在PVE中安装了一个黑群晖，但是并没有使用它管理任何数据，一方面盗版的东西可能不稳定，另一方面不想被某个生态捆绑。最重要的一点：我始终都是使用ZFS，而群晖并不支持ZFS。碰巧最近使用samba服务时遇到一些问题，因此打算研究一下能否把这个黑群晖利用起来。</p>
@@ -4097,6 +4097,35 @@ Windows 平台
       <tags>
         <tag>pve</tag>
         <tag>synology</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用systemd运行hexo服务</title>
+    <url>/2024/01/29/run-hexo-server-as-systemd-service.html</url>
+    <content><![CDATA[<blockquote>
+<p>通常hexo被用于创建静态站点，然后部署在GitHub等支持静态网站托管的平台。但hexo本身也支持启动一个简单的http server，用于在浏览器中实时显示编辑的内容。如果我们能让这个服务运行在后台，一方面无需每次手动拉起，另一方面可以当作一个小站点使用，并且支持实时更新。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="安装Node-js"><a href="#安装Node-js" class="headerlink" title="安装Node.js"></a>安装Node.js</h1><p>如果要让Node.js应用在开机后以root用户启动，我们需要把Node.js安装到根目录，而不是家目录。这里以Debian为例，其它系统参可以参考<a href="https://nodejs.org/en/download/package-manager#debian-and-ubuntu-based-linux-distributions">Installing Node.js via package manager</a>。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -fsSL https://deb.nodesource.com/setup_current.x | sudo bash -</span><br><span class="line">sudo apt install -y nodejs</span><br></pre></td></tr></table></figure>
+
+<h1 id="安装hexo"><a href="#安装hexo" class="headerlink" title="安装hexo"></a>安装hexo</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
+
+<h1 id="创建systemd服务"><a href="#创建systemd服务" class="headerlink" title="创建systemd服务"></a>创建systemd服务</h1><p>创建<code>/lib/systemd/system/hexo.service</code>文件，将<code>/home/[yourdirectory]/blog</code>替换成hexo的根目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[Service]</span><br><span class="line">WorkingDirectory=/home/[yourdirectory]/blog</span><br><span class="line">ExecStart=/bin/hexo server -p80</span><br><span class="line">Restart=always</span><br><span class="line">StandardOutput=syslog</span><br><span class="line">StandardError=syslog</span><br><span class="line">SyslogIdentifier=hexo</span><br><span class="line">User=root</span><br><span class="line">Group=root</span><br><span class="line">Environment=NODE_ENV=production</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<h1 id="启动hexo服务"><a href="#启动hexo服务" class="headerlink" title="启动hexo服务"></a>启动hexo服务</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> hexo.service</span><br><span class="line">sudo systemctl start hexo.service</span><br><span class="line">sudo systemctl status hexo.service</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://chrisbergeron.com/2017/10/07/hexo_systemd_unit_file/">A systemD unit file for Hexo</a></p>
+]]></content>
+      <categories>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+        <tag>hexo</tag>
+        <tag>systemd</tag>
       </tags>
   </entry>
 </search>
