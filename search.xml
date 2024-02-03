@@ -4128,4 +4128,97 @@ Windows 平台
         <tag>systemd</tag>
       </tags>
   </entry>
+  <entry>
+    <title>构建EDK2镜像并在QEMU启动</title>
+    <url>/2023/08/29/build-and-boot-edk2-in-qemu.html</url>
+    <content><![CDATA[<blockquote>
+<p>从今天起，我将涉足一个新的领域：UEFI。目前UEFI已经逐渐从以X86为主的服务器PC领域，渗透到以ARM为主的终端领域。得益于其灵活的扩展性以及较低的开发门槛，以后越来越多的设备将使用它作为自身启动链的一个重要组成部分。由于UEFI只是一套标准，参照该标准有许多实现，其中最有名之一就是Intel主导开发的EDK2。因此我的学习之旅也会从它开始，今天主要介绍如何构建EDK2以及在QEMU上启动它。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="安装依赖"><a href="#安装依赖" class="headerlink" title="安装依赖"></a>安装依赖</h1><p>我们将以Debian12作为例子，其他Linux发行版请自行修改。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install build-essential git python uuid-dev nasm acpica-tools</span><br></pre></td></tr></table></figure>
+
+<h1 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/tianocore/edk2.git</span><br><span class="line"><span class="built_in">cd</span> edk2</span><br><span class="line">git submodule update --init</span><br></pre></td></tr></table></figure>
+
+<h1 id="构建EDK2"><a href="#构建EDK2" class="headerlink" title="构建EDK2"></a>构建EDK2</h1><p>EDK2支持多种平台和工具链，这里我们主要介绍QEMU平台上AARCH64和X86两个架构，并且使用CLANG和GCC两种工具链进行编译。</p>
+<h2 id="构建EDK2工具集"><a href="#构建EDK2工具集" class="headerlink" title="构建EDK2工具集"></a>构建EDK2工具集</h2><p>EDK2源码中包含了一系列工具，用于在构建过程中进行链接打包等工作，因此我们需要先将这些工具构建出来。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> EDK_TOOLS_PATH=<span class="variable">$PWD</span>/BaseTools</span><br><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">make -C BaseTools</span><br></pre></td></tr></table></figure>
+
+<h2 id="X86架构"><a href="#X86架构" class="headerlink" title="X86架构"></a>X86架构</h2><p>X86架构的QEMU固件所对应的Package是<code>OvmfPkg/OvmfPkgX64.dsc</code>。</p>
+<ol>
+<li><p><strong>使用GCC工具链</strong></p>
+<p> 根据需要安装GCC工具链，比如我们现在需要安装X86版本的GCC，并设置prefix：</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install gcc</span><br><span class="line"><span class="built_in">export</span> GCC5_AARCH64_PREFIX=</span><br></pre></td></tr></table></figure>
+
+<p> 构建EDK2</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t GCC5 -p OvmfPkg/OvmfPkgX64.dsc</span><br></pre></td></tr></table></figure>
+
+<p> 编译出的固件在<code>Build/OvmfX64/DEBUG_GCC5</code>。</p>
+</li>
+<li><p><strong>使用CLANG工具链</strong></p>
+<p> 由于clang原生支持交叉编译，因此可以直接安装：</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clang</span><br></pre></td></tr></table></figure>
+
+<p> 构建EDK2</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t CLANGDWARF -p OvmfPkg/OvmfPkgX64.dsc</span><br></pre></td></tr></table></figure>
+
+<p> 编译出的固件在<code>Build/OvmfX64/DEBUG_CLANGDWARF</code>。</p>
+</li>
+</ol>
+<h2 id="AARCH64架构"><a href="#AARCH64架构" class="headerlink" title="AARCH64架构"></a>AARCH64架构</h2><p>AARCH64架构的QEMU固件所对应的Package是<code>ArmVirtPkg/ArmVirtQemu.dsc</code>。</p>
+<ol>
+<li><p><strong>使用GCC工具链</strong></p>
+<p> 根据需要安装GCC工具链，比如我们现在需要安装AARCH64版本的GCC，并设置prefix：</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install gcc-aarch64-linux-gnu</span><br><span class="line"><span class="built_in">export</span> GCC5_AARCH64_PREFIX=aarch64-linux-gnu-</span><br></pre></td></tr></table></figure>
+
+<p> 构建EDK2</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t GCC5 -p ArmVirtPkg/ArmVirtQemu.dsc</span><br></pre></td></tr></table></figure>
+
+<p> 编译出的固件在<code>Build/ArmVirtQemu-AARCH64/DEBUG_GCC5</code>。</p>
+</li>
+<li><p><strong>使用CLANG工具链</strong></p>
+<p> 由于clang原生支持交叉编译，因此可以直接安装：</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clang</span><br></pre></td></tr></table></figure>
+
+<p> 构建EDK2</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t CLANGDWARF -p ArmVirtPkg/ArmVirtQemu.dsc</span><br></pre></td></tr></table></figure>
+
+<p> 编译出的固件在<code>Build/ArmVirtQemu-AARCH64/DEBUG_CLANGDWARF</code>。</p>
+</li>
+</ol>
+<h1 id="在QEMU中启动"><a href="#在QEMU中启动" class="headerlink" title="在QEMU中启动"></a>在QEMU中启动</h1><p>启动所需的固件<code>OVMF_CODE.fd</code>和<code>OVMF_VARS.fd</code>在<code>&lt;固件目录&gt;/FV中</code>，这里以<code>Build/OvmfX64/DEBUG_GCC5/FV</code>和<code>Build/ArmVirtQemu-AARCH64/DEBUG_GCC5/FV</code>为例。</p>
+<h2 id="X86架构-1"><a href="#X86架构-1" class="headerlink" title="X86架构"></a>X86架构</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> Build/OvmfX64/DEBUG_GCC5/FV</span><br><span class="line"></span><br><span class="line">qemu-system-x86_64 -machine q35 -cpu qemu64 \</span><br><span class="line">  -drive <span class="keyword">if</span>=pflash,format=raw,unit=0,file=OVMF_CODE.fd,<span class="built_in">readonly</span>=on \</span><br><span class="line">  -drive <span class="keyword">if</span>=pflash,format=raw,unit=1,file=OVMF_VARS.fd \</span><br><span class="line">  -net none \</span><br><span class="line">  -nographic</span><br></pre></td></tr></table></figure>
+
+<h2 id="AARCH64架构-1"><a href="#AARCH64架构-1" class="headerlink" title="AARCH64架构"></a>AARCH64架构</h2><p>AARCH64要求pflash的大小为64M，因此我们首先需要调整固件大小到64M：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> Build/ArmVirtQemu-AARCH64/DEBUG_GCC5/FV</span><br><span class="line"></span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=QEMU_EFI_64.fd bs=1M count=64</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=QEMU_VARS_64.fd bs=1M count=64</span><br><span class="line"></span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=QEMU_EFI.fd of=QEMU_EFI_64.fd conv=notrunc</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=QEMU_VARS.fd of=QEMU_VARS_64.fd conv=notrunc</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">qemu-system-aarch64 -machine virt -cpu cortex-a57 \</span><br><span class="line">  -drive <span class="keyword">if</span>=pflash,format=raw,unit=0,file=QEMU_EFI_64.fd,<span class="built_in">readonly</span>=on \</span><br><span class="line">  -drive <span class="keyword">if</span>=pflash,format=raw,unit=1,file=QEMU_VARS_64.fd \</span><br><span class="line">  -net none \</span><br><span class="line">  -nographic</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><p><a href="https://www.kraxel.org/blog/2022/05/edk2-virt-quickstart/">edk2 quickstart for virtualization</a></p>
+</li>
+<li><p><a href="https://wiki.osdev.org/EDK2">https://wiki.osdev.org/EDK2</a></p>
+</li>
+<li><p><a href="https://wiki.osdev.org/UEFI">https://wiki.osdev.org/UEFI</a></p>
+</li>
+<li><p><a href="https://github.com/tianocore/tianocore.github.io/wiki/How-to-run-OVMF">How to run OVMF</a></p>
+</li>
+<li><p><a href="https://lists.katacontainers.io/pipermail/kata-dev/2021-January/001647.html">Booting OVMF with -bios</a></p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Bootloader</category>
+      </categories>
+      <tags>
+        <tag>UEFI</tag>
+        <tag>EDK2</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>watch-stream-media-with-tvbox</title>
+    <url>/2024/01/29/watch-stream-media-with-tvbox.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
 </search>
