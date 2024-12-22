@@ -4221,4 +4221,31 @@ Windows 平台
     <url>/2024/01/29/watch-stream-media-with-tvbox.html</url>
     <content><![CDATA[]]></content>
   </entry>
+  <entry>
+    <title>iTop-4412配置内核开发环境</title>
+    <url>/2024/08/15/itop-4412-setup-kernel-dev-env.html</url>
+    <content><![CDATA[<blockquote>
+<p>虽然理论上开发板拿过来就可以使用，但如果正确配置环境，可以大大提高开发效率，事半功倍。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="搭建内核编译环境"><a href="#搭建内核编译环境" class="headerlink" title="搭建内核编译环境"></a>搭建内核编译环境</h1><ol>
+<li><p>使能32位程序支持</p>
+<p> 因为交叉编译器为32位程序，因此需要安装32位动态库。</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo dpkg --add-architecture i386</span><br><span class="line">sudo apt install lib32z1 lib32ncurses6 lib32stdc++6</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>安装交叉编译器</p>
+</li>
+<li><p>克隆内核源码</p>
+</li>
+<li><p>编译内核</p>
+</li>
+<li><p>刷写内核</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Embedded</category>
+      </categories>
+  </entry>
 </search>
