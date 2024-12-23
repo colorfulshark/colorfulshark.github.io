@@ -4217,11 +4217,6 @@ Windows 平台
       </tags>
   </entry>
   <entry>
-    <title>watch-stream-media-with-tvbox</title>
-    <url>/2024/01/29/watch-stream-media-with-tvbox.html</url>
-    <content><![CDATA[]]></content>
-  </entry>
-  <entry>
     <title>iTop-4412配置内核开发环境</title>
     <url>/2024/08/15/itop-4412-setup-kernel-dev-env.html</url>
     <content><![CDATA[<blockquote>
@@ -4235,17 +4230,115 @@ Windows 平台
  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo dpkg --add-architecture i386</span><br><span class="line">sudo apt install lib32z1 lib32ncurses6 lib32stdc++6</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>安装交叉编译器</p>
-</li>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Download prebuilt toolchain</span></span><br><span class="line">wget https://github.com/colorfulshark/arm-2009q3/archive/refs/heads/master.zip</span><br><span class="line">unzip master.zip</span><br><span class="line"><span class="built_in">mv</span> arm-2009q3-master arm-2009q3</span><br><span class="line"></span><br><span class="line"><span class="comment"># install to target directory</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> /usr/local/arm</span><br><span class="line">sudo <span class="built_in">mv</span> arm-2009q3 /usr/local/arm/</span><br></pre></td></tr></table></figure></li>
 <li><p>克隆内核源码</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/colorfulshark/iTop4412_Kernel_3.0.git</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>编译内核</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># setup default config</span></span><br><span class="line"><span class="built_in">cp</span> config_for_linux_9.7 .config</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>刷写内核</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># execute in uboot</span></span><br><span class="line">fastboot</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute in host</span></span><br><span class="line">sudo fastboot flash kernel <span class="built_in">arch</span>/arm/boot/zImage</span><br><span class="line">sudo fastboot reboot</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="搭建文件系统编译环境"><a href="#搭建文件系统编译环境" class="headerlink" title="搭建文件系统编译环境"></a>搭建文件系统编译环境</h1><p>这里使用Buildroot构建文件系统，因为其对老内核的支持较好。</p>
+<ol>
+<li><p>克隆代码</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://gitlab.com/buildroot.org/buildroot.git</span><br><span class="line"><span class="built_in">cd</span> buildroot</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Buildroot</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">make menuconfig</span><br><span class="line"></span><br><span class="line">Target options:</span><br><span class="line">    Target Architecture: ARM (little endian)</span><br><span class="line">    Target Architecture Variant: cortex-A9</span><br><span class="line"></span><br><span class="line">Toolchain:</span><br><span class="line">    C library: musl</span><br><span class="line">    Kernel Headers: Manually specified Linux version</span><br><span class="line">    linux version: 3.0.15</span><br><span class="line">    Custom kernel headers series: 3.0.x</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>构建Buildroot</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">make</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>解压rootfs</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo tar -xf output/images/rootfs.tar -C /rootfs</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="设置NFS-Boot网络启动"><a href="#设置NFS-Boot网络启动" class="headerlink" title="设置NFS Boot网络启动"></a>设置NFS Boot网络启动</h1><p>使用NFS挂载根文件系统可以减少文件传输操作，提高开发效率，这里使用Buildroot作为根文件系统。</p>
+<ol>
+<li><p>配置NFS服务器</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install nfs-kernel-server</span><br><span class="line"></span><br><span class="line">sudo vim /etc/exports</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line">/rootfs *(rw,<span class="built_in">sync</span>,no_root_squash)</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line"></span><br><span class="line"><span class="string">sudo systemctl restart nfs-kernel-server</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置内核选项</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Networking support:</span><br><span class="line">    Networking options:</span><br><span class="line">        IP: kernel level autoconfiguration:</span><br><span class="line">            IP: DHCP support: Y</span><br><span class="line">            IP: BOOTP support: Y</span><br><span class="line">            IP: RARP support: Y</span><br><span class="line"></span><br><span class="line">File systems:</span><br><span class="line">    Network File Systems:</span><br><span class="line">        NFS client support:</span><br><span class="line">            NFS client support <span class="keyword">for</span> NFS version 3: Y</span><br><span class="line">        Root file system on NFS: Y</span><br><span class="line"></span><br><span class="line">Boot options:</span><br><span class="line">    Default kernel <span class="built_in">command</span> string: <span class="string">&quot;root=/dev/nfs nfsroot=192.168.0.1:/rootfs,proto=tcp,vers=3 rw ip=192.168.0.2:192.168.0.1:192.168.0.1:255.255.255.0:itop4412:eth0:off init=/linuxrc console=ttySAC2,115200 lcd=9.7&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调试NFS启动问题</p>
+<p> 如果内核无法挂载NFS根文件系统，可以使用以下内核cmdline进行调试</p>
+<ul>
+<li>nfsrootdebug: 启用NFS Root调试日志</li>
+<li>rootdelay&#x3D;N: 等待N秒后再挂载文件系统</li>
+<li>rootwait: 等待root出现后再挂载</li>
+</ul>
 </li>
 </ol>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://blog.csdn.net/ComputerInBook/article/details/107575590">https://blog.csdn.net/ComputerInBook/article/details/107575590</a></p>
+<p><a href="https://blog.colorfulshark.net/2020/08/23/setup-linux-2-6-system-from-scratch.html">https://blog.colorfulshark.net/2020/08/23/setup-linux-2-6-system-from-scratch.html</a></p>
 ]]></content>
       <categories>
         <category>Embedded</category>
       </categories>
+  </entry>
+  <entry>
+    <title>使用VSCode进行内核开发</title>
+    <url>/2024/12/22/kernel-development-with-vscode.html</url>
+    <content><![CDATA[<blockquote>
+<p>Linux内核并没有任何官方IDE，所以大家都是各显神通，比较常见的就是使用Vim&#x2F;Emacs结合各种插件，但这种方式普遍存在配置复杂和上手难度高的问题，我个人是不愿意浪费太多时间在IDE上的。碰巧有一款IDE，同样支持大量插件，并且社区活跃，它就是VSCode，所以今天就来看看如何通过各种插件将它打造为高效的内核开发IDE。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="远程连接Linux服务器"><a href="#远程连接Linux服务器" class="headerlink" title="远程连接Linux服务器"></a>远程连接Linux服务器</h1><p>我们要开发Linux内核，当然最好还是在Linux上进行，除非你的笔记本&#x2F;台式机就是Linux系统，我们更多的还是使用Windows&#x2F;Mac连接服务器来完成开发工作。</p>
+<p>通过使用<a href="https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh">Remote - SSH</a>插件，我们可以像在本地一样，在远程服务器上进行开发。</p>
+<p><strong>配置SSH连接</strong></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># &lt;HOME&gt;/.ssh/config</span></span><br><span class="line"></span><br><span class="line">Host &lt;IP or hostname&gt;</span><br><span class="line">    HostName kernel-dev</span><br><span class="line">    User &lt;username&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="设置代码索引和代码补全"><a href="#设置代码索引和代码补全" class="headerlink" title="设置代码索引和代码补全"></a>设置代码索引和代码补全</h1><p>这一直是内核开发的老大难问题，因为内核源码过于庞大，以往的补全方案，要么速度快，但不精准，如ctags&#x2F;cscope；要么精准，但速度慢，如C&#x2F;C++ IntelliSense。</p>
+<p>然而<a href="https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd">clangd</a>插件的出现，非常好的解决了速度和精确性的问题，但它有一个强依赖：需要使用<code>compile_commands.json</code>来生成索引数据。好在内核源码树中已经有工具可以为我们生成<code>compile_commands.json</code>。</p>
+<ol>
+<li><p>安装clangd</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clangd</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生成<code>compile_commands.json</code></p>
+<p> 首先我们需要对内核或模块进行编译，编译成功后，在编译目录执行以下命令</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">./scripts/clang-tools/gen_compile_commands.py</span><br></pre></td></tr></table></figure>
+
+<p> 打开<code>compile_commands.json</code>，确认不为空。</p>
+</li>
+<li><p>配置clangd插件</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Settings &gt; Remote &gt; Extensions &gt; clangd &gt; Arguments</span></span><br><span class="line"></span><br><span class="line">--compile-commands-dir=<span class="variable">$&#123;workspaceFolder&#125;</span></span><br><span class="line">--background-index</span><br><span class="line">--completion-style=detailed</span><br><span class="line">--header-insertion=never</span><br><span class="line">-<span class="built_in">log</span>=info</span><br><span class="line">-pretty</span><br><span class="line">-j=8</span><br></pre></td></tr></table></figure>
+
+<p> 注意最后的<code>-j=8</code>是clangd在生成索引所创建的进程数，通常设置为CPU数量。</p>
+</li>
+<li><p>配置工程</p>
+<p> 因为clangd使用clang来编译每个文件，如果我们的内核是使用GCC编译的，就会存在一些clang无法识别的编译选项，这些编译选项通常是用来进行代码优化的，所以去掉也不会影响代码索引。</p>
+<p> 在VSCode中执行命令<code>&gt;clangd: Open project configuration file</code>，打开<code>.clangd</code>文件，加入以下内容</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">CompileFlags:</span><br><span class="line">    Remove:</span><br><span class="line">        - -m*</span><br><span class="line">        - -f*</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重启clangd</p>
+<p> 在VSCode中执行命令<code>&gt;clangd: Restart language server</code>。</p>
+</li>
+</ol>
+<h1 id="配置汇编代码高亮"><a href="#配置汇编代码高亮" class="headerlink" title="配置汇编代码高亮"></a>配置汇编代码高亮</h1><p>做内核开发时，难免会涉及到一些汇编文件，但是VSCode默认并不对汇编文件进行高亮，因此需要安装插件来解决。</p>
+<ul>
+<li><p>ARM汇编: <a href="https://marketplace.visualstudio.com/items?itemName=dan-c-underwood.arm">Arm Assembly</a></p>
+</li>
+<li><p>X86汇编: <a href="https://marketplace.visualstudio.com/items?itemName=13xforever.language-x86-64-assembly">x86 and x86_64 Assembly</a></p>
+</li>
+<li><p>MIPS汇编: <a href="https://marketplace.visualstudio.com/items?itemName=AngaBlue.asm-formatter">MIPS Assembly Formatter</a></p>
+</li>
+<li><p>LoongArch汇编: <a href="https://marketplace.visualstudio.com/items?itemName=FreeFlyingSheep.loongarch-assembly">LoongArch Assembly</a></p>
+</li>
+</ul>
+<h1 id="显示代码历史git-commit"><a href="#显示代码历史git-commit" class="headerlink" title="显示代码历史git commit"></a>显示代码历史git commit</h1><p>使用<code>git blame</code>是经常使用的“甩锅”手段，通过<a href="https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens">GitLens</a>插件，我们可以实时看到每一行代码来自哪个commit。</p>
+<h1 id="配置Vim快捷键"><a href="#配置Vim快捷键" class="headerlink" title="配置Vim快捷键"></a>配置Vim快捷键</h1><p>我个人并不是Vim的狂热粉丝，但是Vim的快捷键设定，确实可以让我在大部分时间脱离鼠标和触控板，提高开发效率。通过安装<a href="https://marketplace.visualstudio.com/items?itemName=vscodevim.vim">Vim</a>插件，即可立即享受大部分Vim的快捷键操作。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://github.com/clangd/clangd/issues/662">https://github.com/clangd/clangd/issues/662</a></p>
+<p><a href="https://stackoverflow.com/questions/49198816/how-to-use-the-visual-studio-code-to-navigate-linux-kernel-source">https://stackoverflow.com/questions/49198816/how-to-use-the-visual-studio-code-to-navigate-linux-kernel-source</a></p>
+]]></content>
+      <categories>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>kernel</tag>
+        <tag>vscode</tag>
+      </tags>
   </entry>
 </search>

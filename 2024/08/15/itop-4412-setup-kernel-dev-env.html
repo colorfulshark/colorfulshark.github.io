@@ -28,7 +28,7 @@
 <meta property="og:description" content="虽然理论上开发板拿过来就可以使用，但如果正确配置环境，可以大大提高开发效率，事半功倍。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-08-15T11:58:13.000Z">
-<meta property="article:modified_time" content="2024-12-22T09:25:04.958Z">
+<meta property="article:modified_time" content="2024-12-22T12:14:02.838Z">
 <meta property="article:author" content="Ryan Wong">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
@@ -90,7 +90,7 @@
 
 
 <nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">81</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">12</span></a></li>
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">82</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">12</span></a></li>
       <li class="menu-item menu-item-search">
         <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
         </a>
@@ -141,7 +141,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E5%86%85%E6%A0%B8%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">搭建内核编译环境</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E5%86%85%E6%A0%B8%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">搭建内核编译环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">搭建文件系统编译环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AENFS-Boot%E7%BD%91%E7%BB%9C%E5%90%AF%E5%8A%A8"><span class="nav-number">3.</span> <span class="nav-text">设置NFS Boot网络启动</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -167,7 +167,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">81</span>
+        <span class="site-state-item-count">82</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -242,7 +242,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2024-12-22 17:25:04" itemprop="dateModified" datetime="2024-12-22T17:25:04+08:00">2024-12-22</time>
+      <time title="Modified: 2024-12-22 20:14:02" itemprop="dateModified" datetime="2024-12-22T20:14:02+08:00">2024-12-22</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -274,14 +274,49 @@
  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo dpkg --add-architecture i386</span><br><span class="line">sudo apt install lib32z1 lib32ncurses6 lib32stdc++6</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>安装交叉编译器</p>
-</li>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Download prebuilt toolchain</span></span><br><span class="line">wget https://github.com/colorfulshark/arm-2009q3/archive/refs/heads/master.zip</span><br><span class="line">unzip master.zip</span><br><span class="line"><span class="built_in">mv</span> arm-2009q3-master arm-2009q3</span><br><span class="line"></span><br><span class="line"><span class="comment"># install to target directory</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> /usr/local/arm</span><br><span class="line">sudo <span class="built_in">mv</span> arm-2009q3 /usr/local/arm/</span><br></pre></td></tr></table></figure></li>
 <li><p>克隆内核源码</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/colorfulshark/iTop4412_Kernel_3.0.git</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>编译内核</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># setup default config</span></span><br><span class="line"><span class="built_in">cp</span> config_for_linux_9.7 .config</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>刷写内核</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># execute in uboot</span></span><br><span class="line">fastboot</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute in host</span></span><br><span class="line">sudo fastboot flash kernel <span class="built_in">arch</span>/arm/boot/zImage</span><br><span class="line">sudo fastboot reboot</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="搭建文件系统编译环境"><a href="#搭建文件系统编译环境" class="headerlink" title="搭建文件系统编译环境"></a>搭建文件系统编译环境</h1><p>这里使用Buildroot构建文件系统，因为其对老内核的支持较好。</p>
+<ol>
+<li><p>克隆代码</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://gitlab.com/buildroot.org/buildroot.git</span><br><span class="line"><span class="built_in">cd</span> buildroot</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Buildroot</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">make menuconfig</span><br><span class="line"></span><br><span class="line">Target options:</span><br><span class="line">    Target Architecture: ARM (little endian)</span><br><span class="line">    Target Architecture Variant: cortex-A9</span><br><span class="line"></span><br><span class="line">Toolchain:</span><br><span class="line">    C library: musl</span><br><span class="line">    Kernel Headers: Manually specified Linux version</span><br><span class="line">    linux version: 3.0.15</span><br><span class="line">    Custom kernel headers series: 3.0.x</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>构建Buildroot</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>解压rootfs</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo tar -xf output/images/rootfs.tar -C /rootfs</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="设置NFS-Boot网络启动"><a href="#设置NFS-Boot网络启动" class="headerlink" title="设置NFS Boot网络启动"></a>设置NFS Boot网络启动</h1><p>使用NFS挂载根文件系统可以减少文件传输操作，提高开发效率，这里使用Buildroot作为根文件系统。</p>
+<ol>
+<li><p>配置NFS服务器</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install nfs-kernel-server</span><br><span class="line"></span><br><span class="line">sudo vim /etc/exports</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt;</span><br><span class="line">/rootfs *(rw,<span class="built_in">sync</span>,no_root_squash)</span><br><span class="line">&lt;&lt;&lt;</span><br><span class="line"></span><br><span class="line"><span class="string">sudo systemctl restart nfs-kernel-server</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置内核选项</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Networking support:</span><br><span class="line">    Networking options:</span><br><span class="line">        IP: kernel level autoconfiguration:</span><br><span class="line">            IP: DHCP support: Y</span><br><span class="line">            IP: BOOTP support: Y</span><br><span class="line">            IP: RARP support: Y</span><br><span class="line"></span><br><span class="line">File systems:</span><br><span class="line">    Network File Systems:</span><br><span class="line">        NFS client support:</span><br><span class="line">            NFS client support <span class="keyword">for</span> NFS version 3: Y</span><br><span class="line">        Root file system on NFS: Y</span><br><span class="line"></span><br><span class="line">Boot options:</span><br><span class="line">    Default kernel <span class="built_in">command</span> string: <span class="string">&quot;root=/dev/nfs nfsroot=192.168.0.1:/rootfs,proto=tcp,vers=3 rw ip=192.168.0.2:192.168.0.1:192.168.0.1:255.255.255.0:itop4412:eth0:off init=/linuxrc console=ttySAC2,115200 lcd=9.7&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调试NFS启动问题</p>
+<p> 如果内核无法挂载NFS根文件系统，可以使用以下内核cmdline进行调试</p>
+<ul>
+<li>nfsrootdebug: 启用NFS Root调试日志</li>
+<li>rootdelay&#x3D;N: 等待N秒后再挂载文件系统</li>
+<li>rootwait: 等待root出现后再挂载</li>
+</ul>
 </li>
 </ol>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/ComputerInBook/article/details/107575590">https://blog.csdn.net/ComputerInBook/article/details/107575590</a></p>
+<p><a href="https://blog.colorfulshark.net/2020/08/23/setup-linux-2-6-system-from-scratch.html">https://blog.colorfulshark.net/2020/08/23/setup-linux-2-6-system-from-scratch.html</a></p>
 
     </div>
 
@@ -295,11 +330,14 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2024/01/29/watch-stream-media-with-tvbox.html" rel="prev" title="watch-stream-media-with-tvbox">
-                  <i class="fa fa-angle-left"></i> watch-stream-media-with-tvbox
+                <a href="/2024/01/29/run-hexo-server-as-systemd-service.html" rel="prev" title="使用systemd运行hexo服务">
+                  <i class="fa fa-angle-left"></i> 使用systemd运行hexo服务
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2024/12/22/kernel-development-with-vscode.html" rel="next" title="使用VSCode进行内核开发">
+                  使用VSCode进行内核开发 <i class="fa fa-angle-right"></i>
+                </a>
             </div>
           </div>
     </footer>
