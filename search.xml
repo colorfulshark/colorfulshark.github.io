@@ -4341,4 +4341,52 @@ Windows 平台
         <tag>vscode</tag>
       </tags>
   </entry>
+  <entry>
+    <title>部署私有IPTV流媒体服务</title>
+    <url>/2025/01/25/setup-self-hosted-iptv-service.html</url>
+    <content><![CDATA[<blockquote>
+<p>最近有一大批IPv6的直播源被封，无奈需要寻找其他更流畅、更稳定的源，结果发现了一个全新的领域：部署私有IPTV流媒体服务，比如pixman，allinone等，本文会介绍市面主流的服务部署方式。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="Pixman"><a href="#Pixman" class="headerlink" title="Pixman"></a>Pixman</h1><p>官网：<a href="https://pixman.io/">https://pixman.io/</a></p>
+<p>TG：<a href="https://t.me/livednowgroup">https://t.me/livednowgroup</a></p>
+<p>由于该项目短期内不会维护，已经无法正常播放。</p>
+<h1 id="Allinone"><a href="#Allinone" class="headerlink" title="Allinone"></a>Allinone</h1><p>官网：<a href="https://pan.v1.mk/">https://pan.v1.mk/</a></p>
+<p>官方文档：<a href="https://pan.v1.mk/%E6%AF%8F%E6%9C%9F%E8%A7%86%E9%A2%91%E4%B8%AD%E7%94%A8%E5%88%B0%E7%9A%84%E6%96%87%E4%BB%B6%E5%88%86%E4%BA%AB/allinone%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md">https://pan.v1.mk/每期视频中用到的文件分享/allinone二进制文件/使用说明.md</a></p>
+<p>TG：<a href="https://t.me/feiyangdigital">https://t.me/feiyangdigital</a></p>
+<ol>
+<li><p>生成部署命令</p>
+<p> <a href="https://imgtool.v1.mk/allinone.html">https://imgtool.v1.mk/allinone.html</a></p>
+</li>
+<li><p>使用watchtower自动更新容器</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d --name watchtower --restart=always -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower --cleanup --interval 3600</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>下载m3u列表</p>
+<p> http:&#x2F;&#x2F;你的IP:35455&#x2F;tv.m3u</p>
+</li>
+<li><p>使用格式化工具整理频道列表（可选）</p>
+<p> <a href="https://github.com/FanchangWang/allinone_format">https://github.com/FanchangWang/allinone_format</a></p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d --restart=unless-stopped --pull=always -v /etc/allinone_format:/app/config -p 35456:35456 --name allinone_format yuexuangu/allinone_format:latest</span><br></pre></td></tr></table></figure>
+
+<p> http:&#x2F;&#x2F;你的IP:35456&#x2F;</p>
+</li>
+</ol>
+<h1 id="Doube"><a href="#Doube" class="headerlink" title="Doube"></a>Doube</h1><p>TG: <a href="https://t.me/doubebly003">https://t.me/doubebly003</a></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d --name=doube-itv  --restart=always -p 50001:5000 doubebly/doube-itv:latest</span><br></pre></td></tr></table></figure>
+
+<p>http:&#x2F;&#x2F;你的IP:50001&#x2F;help</p>
+<h1 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h1><p>TG: <a href="https://t.me/PandaGroovePG">https://t.me/PandaGroovePG</a></p>
+<p>PG需要进入TG发布群组后，手动下载软件包部署。</p>
+]]></content>
+      <categories>
+        <category>Geek</category>
+        <category>How-To</category>
+      </categories>
+      <tags>
+        <tag>media</tag>
+        <tag>nas</tag>
+        <tag>iptv</tag>
+      </tags>
+  </entry>
 </search>
