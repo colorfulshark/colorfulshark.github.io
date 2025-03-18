@@ -4137,7 +4137,7 @@ Windows 平台
 <span id="more"></span>
 
 <h1 id="安装依赖"><a href="#安装依赖" class="headerlink" title="安装依赖"></a>安装依赖</h1><p>我们将以Debian12作为例子，其他Linux发行版请自行修改。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install build-essential git python uuid-dev nasm acpica-tools</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install build-essential git python3 uuid-dev nasm acpica-tools cscope clangd</span><br></pre></td></tr></table></figure>
 
 <h1 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/tianocore/edk2.git</span><br><span class="line"><span class="built_in">cd</span> edk2</span><br><span class="line">git submodule update --init</span><br></pre></td></tr></table></figure>
 
@@ -4152,7 +4152,7 @@ Windows 平台
  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install gcc</span><br><span class="line"><span class="built_in">export</span> GCC5_AARCH64_PREFIX=</span><br></pre></td></tr></table></figure>
 
 <p> 构建EDK2</p>
- <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t GCC5 -p OvmfPkg/OvmfPkgX64.dsc</span><br></pre></td></tr></table></figure>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t GCC5 -p OvmfPkg/OvmfPkgX64.dsc -Y COMPILE_INFO -y BuildReport.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
 
 <p> 编译出的固件在<code>Build/OvmfX64/DEBUG_GCC5</code>。</p>
 </li>
@@ -4161,7 +4161,7 @@ Windows 平台
  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clang</span><br></pre></td></tr></table></figure>
 
 <p> 构建EDK2</p>
- <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t CLANGDWARF -p OvmfPkg/OvmfPkgX64.dsc</span><br></pre></td></tr></table></figure>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a X64 -t CLANGDWARF -p OvmfPkg/OvmfPkgX64.dsc -Y COMPILE_INFO -y BuildReport.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
 
 <p> 编译出的固件在<code>Build/OvmfX64/DEBUG_CLANGDWARF</code>。</p>
 </li>
@@ -4173,16 +4173,16 @@ Windows 平台
  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install gcc-aarch64-linux-gnu</span><br><span class="line"><span class="built_in">export</span> GCC5_AARCH64_PREFIX=aarch64-linux-gnu-</span><br></pre></td></tr></table></figure>
 
 <p> 构建EDK2</p>
- <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t GCC5 -p ArmVirtPkg/ArmVirtQemu.dsc</span><br></pre></td></tr></table></figure>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t GCC5 -p ArmVirtPkg/ArmVirtQemu.dsc -Y COMPILE_INFO -y BuildReport.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
 
 <p> 编译出的固件在<code>Build/ArmVirtQemu-AARCH64/DEBUG_GCC5</code>。</p>
 </li>
 <li><p><strong>使用CLANG工具链</strong></p>
 <p> 由于clang原生支持交叉编译，因此可以直接安装：</p>
- <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clang</span><br></pre></td></tr></table></figure>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install clang llvm lld</span><br></pre></td></tr></table></figure>
 
 <p> 构建EDK2</p>
- <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t CLANGDWARF -p ArmVirtPkg/ArmVirtQemu.dsc</span><br></pre></td></tr></table></figure>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">source</span> edksetup.sh</span><br><span class="line">build -a AARCH64 -t CLANGDWARF -p ArmVirtPkg/ArmVirtQemu.dsc -Y COMPILE_INFO -y BuildReport.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
 
 <p> 编译出的固件在<code>Build/ArmVirtQemu-AARCH64/DEBUG_CLANGDWARF</code>。</p>
 </li>
