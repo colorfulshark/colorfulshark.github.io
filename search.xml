@@ -4389,4 +4389,23 @@ Windows 平台
         <tag>iptv</tag>
       </tags>
   </entry>
+  <entry>
+    <title>在Linux上部署Web文件管理器</title>
+    <url>/2025/05/12/deploy-web-file-manager-on-linux.html</url>
+    <content><![CDATA[<blockquote>
+<p>Linux服务器的文件管理通常依赖sftp或samba，当网络环境较差时，操作延迟会变得非常大，甚至导致文件损坏，通过部署基于浏览器的文件管理服务，可以大大优化远程文件管理的体验。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="安装FileBrowser"><a href="#安装FileBrowser" class="headerlink" title="安装FileBrowser"></a>安装FileBrowser</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置Systemd"><a href="#配置Systemd" class="headerlink" title="配置Systemd"></a>配置Systemd</h1><p>只需修改<code>WorkingDirectory</code>为需要管理的目录即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[Service]</span><br><span class="line">WorkingDirectory=/mnt</span><br><span class="line">ExecStart=/usr/local/bin/filebrowser -a 0.0.0.0</span><br><span class="line">Restart=always</span><br><span class="line">StandardOutput=syslog</span><br><span class="line">StandardError=syslog</span><br><span class="line">SyslogIdentifier=filebrowser</span><br><span class="line">User=root</span><br><span class="line">Group=root</span><br><span class="line">Environment=</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p><a href="https://filebrowser.org/installation">https://filebrowser.org/installation</a></p>
+]]></content>
+      <categories>
+        <category>How-To</category>
+      </categories>
+  </entry>
 </search>
