@@ -4312,6 +4312,9 @@ Windows 平台
 <p> 因为clangd使用clang来编译每个文件，如果我们的内核是使用GCC编译的，就会存在一些clang无法识别的编译选项，这些编译选项通常是用来进行代码优化的，所以去掉也不会影响代码索引。</p>
 <p> 在VSCode中执行命令<code>&gt;clangd: Open project configuration file</code>，打开<code>.clangd</code>文件，加入以下内容</p>
  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">CompileFlags:</span><br><span class="line">    Remove:</span><br><span class="line">        - -m*</span><br><span class="line">        - -f*</span><br></pre></td></tr></table></figure>
+
+<p> 如果你在开发内核模块，也可以使用<code>Add</code>参数附件内核头文件路径，例如</p>
+ <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CompileFlags:</span><br><span class="line">    Add:</span><br><span class="line">        - -I/kernel/include</span><br><span class="line">        - -I/kernel/arch/arm/include</span><br><span class="line">        - -I/kernel/arch/arm/include/generated</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>重启clangd</p>
 <p> 在VSCode中执行命令<code>&gt;clangd: Restart language server</code>。</p>
