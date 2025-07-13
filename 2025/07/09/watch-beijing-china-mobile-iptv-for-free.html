@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.css" integrity="sha256-zM8WXtG4eUn7dKKNMTuoWZub++VnSfaOpA/8PJfvTBo=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.colorfulshark.net","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="异地的家人平时有看电视的需求，但是不会使用机顶盒，所以一直使用安卓电视端的TVBox，基本上开机就能看电视。最近运营商对这种公开的电视直播源打击越来越大，一个源的有效期甚至只有几个小时，导致家人频繁反馈电视无法观看。为了一劳永逸，打算基于本地IPTV自建直播源，再结合异地组网共享给家人，要是能不花钱，那就更好了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="免费观看北京移动IPTV">
+<meta property="og:url" content="https://blog.colorfulshark.net/2025/07/09/watch-beijing-china-mobile-iptv-for-free.html">
+<meta property="og:site_name" content="colorfulshark">
+<meta property="og:description" content="异地的家人平时有看电视的需求，但是不会使用机顶盒，所以一直使用安卓电视端的TVBox，基本上开机就能看电视。最近运营商对这种公开的电视直播源打击越来越大，一个源的有效期甚至只有几个小时，导致家人频繁反馈电视无法观看。为了一劳永逸，打算基于本地IPTV自建直播源，再结合异地组网共享给家人，要是能不花钱，那就更好了。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-07-09T05:15:01.000Z">
+<meta property="article:modified_time" content="2025-07-13T13:23:28.370Z">
+<meta property="article:author" content="Ryan Wong">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.colorfulshark.net/2025/07/09/watch-beijing-china-mobile-iptv-for-free.html">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://blog.colorfulshark.net/2025/07/09/watch-beijing-china-mobile-iptv-for-free.html","path":"2025/07/09/watch-beijing-china-mobile-iptv-for-free.html","title":"免费观看北京移动IPTV"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>免费观看北京移动IPTV | colorfulshark</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.umd.js" integrity="sha256-hiUEBwFEpLF6DlB8sGXlKo4kPZ46Ui4qGpd0vrVkOm4=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+  <script src="/js/third-party/fancybox.js" defer></script>
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">colorfulshark</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">blog of a linux developer</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">83</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">13</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="Searching..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0-%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">0. 问题分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1-%E8%8E%B7%E5%8F%96%E7%BB%84%E6%92%AD%E5%9C%B0%E5%9D%80"><span class="nav-number">2.</span> <span class="nav-text">1. 获取组播地址</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-%E7%BB%95%E8%BF%87%E9%89%B4%E6%9D%83"><span class="nav-number">3.</span> <span class="nav-text">2. 绕过鉴权</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-%E7%BB%84%E6%92%AD%E8%BD%AC%E5%8D%95%E6%92%AD"><span class="nav-number">4.</span> <span class="nav-text">3. 组播转单播</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-%E7%BA%BF%E8%B7%AF%E8%BF%9E%E6%8E%A5"><span class="nav-number">4.1.</span> <span class="nav-text">3.1. 线路连接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-udpxy%E9%85%8D%E7%BD%AE"><span class="nav-number">4.2.</span> <span class="nav-text">3.2 udpxy配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-msd-lite%E9%85%8D%E7%BD%AE"><span class="nav-number">4.3.</span> <span class="nav-text">3.3 msd_lite配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-%E6%B5%8B%E8%AF%95%E6%95%88%E6%9E%9C"><span class="nav-number">5.</span> <span class="nav-text">4. 测试效果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#5-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">6.</span> <span class="nav-text">5. 参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ryan Wong"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Ryan Wong</p>
+  <div class="site-description" itemprop="description">Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">63</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">83</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/colorfulshark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;colorfulshark" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:colorfulshark@gmail.com" title="E-Mail → mailto:colorfulshark@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="Back to top">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.colorfulshark.net/2025/07/09/watch-beijing-china-mobile-iptv-for-free.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Ryan Wong">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="colorfulshark">
+      <meta itemprop="description" content="Listen to the Exhortation of the Dawn!<br />Look to this Day!<br />For it is Life, the very Life of Life<br />In its brief course<br />Lie all the Verities and Realities of your existence<br />The Bliss of Growth<br />The Glory of Action<br />The Splendor of Beauty<br />For Yesterday is but a Dream<br />And Tomorrow is only a Vision<br />But Today well lived makes<br />Every Yesterday a Dream of Happiness<br />And every Tomorrow a Visiom of Hope<br />Look well therefore to this Day!<br />Such is the Salutation of the Dawn!">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="免费观看北京移动IPTV | colorfulshark">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          免费观看北京移动IPTV
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-07-09 13:15:01" itemprop="dateCreated datePublished" datetime="2025-07-09T13:15:01+08:00">2025-07-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2025-07-13 21:23:28" itemprop="dateModified" datetime="2025-07-13T21:23:28+08:00">2025-07-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Geek/" itemprop="url" rel="index"><span itemprop="name">Geek</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Geek/How-To/" itemprop="url" rel="index"><span itemprop="name">How-To</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p>异地的家人平时有看电视的需求，但是不会使用机顶盒，所以一直使用安卓电视端的TVBox，基本上开机就能看电视。最近运营商对这种公开的电视直播源打击越来越大，一个源的有效期甚至只有几个小时，导致家人频繁反馈电视无法观看。为了一劳永逸，打算基于本地IPTV自建直播源，再结合异地组网共享给家人，要是能不花钱，那就更好了。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="0-问题分析"><a href="#0-问题分析" class="headerlink" title="0. 问题分析"></a>0. 问题分析</h1><p>无论是移动、联通还是电信的IPTV，大家都使用组播的方式发送直播数据给机顶盒，理论上我们拿到组播地址，并且通过鉴权，就可以在支持组播协议的三方播放器上观看直播，如VLC。</p>
+<p>但如果想把直播源共享给异地网络，就需要首先把组播转换成单播，再通过单播链接拉取直播流，目前主流的转换工具是udpxy和msd_lite。</p>
+<p>所以，我们主要需要解决3个问题：</p>
+<ol>
+<li>获取组播地址</li>
+<li>绕过鉴权</li>
+<li>组播转单播</li>
+</ol>
+<h1 id="1-获取组播地址"><a href="#1-获取组播地址" class="headerlink" title="1. 获取组播地址"></a>1. 获取组播地址</h1><p>最简单的方式就是看是否有其他人共享过<strong>本地相同运营商</strong>的组播地址，比如以下项目：</p>
+<ul>
+<li>北京移动：<a target="_blank" rel="noopener" href="https://github.com/qwerttvv/Beijing-IPTV/blob/master/IPTV-Mobile-Multicast.m3u">https://github.com/qwerttvv/Beijing-IPTV/blob/master/IPTV-Mobile-Multicast.m3u</a></li>
+<li>北京联通：<a target="_blank" rel="noopener" href="https://github.com/qwerttvv/Beijing-IPTV/blob/master/IPTV-Unicom-Multicast.m3u">https://github.com/qwerttvv/Beijing-IPTV/blob/master/IPTV-Unicom-Multicast.m3u</a></li>
+</ul>
+<p>如果找不到，那就需要自己通过Wireshark抓包，网上的教程很多，可以根据自己的实际情况操作。</p>
+<h1 id="2-绕过鉴权"><a href="#2-绕过鉴权" class="headerlink" title="2. 绕过鉴权"></a>2. 绕过鉴权</h1><p>虽然理论上组播可以增加鉴权机制，如MAC地址校验，账号密码等，但根据大量网友反馈，实际上基本没有运营商的IPTV会使用校验手段。</p>
+<p>最简单的验证方式就是：</p>
+<ol>
+<li>使用网线连接光猫的IPTV口和电脑，同时电脑启用DHCP</li>
+<li>在电脑上使用VLC直接播放任意组播地址，如<code>rtp://228.1.1.235:8002</code></li>
+<li>如果能够播放，则表示此组播源无认证校验</li>
+</ol>
+<p>如果不幸你的组播源就是需要认证，那就需要根据具体情况分析了。</p>
+<h1 id="3-组播转单播"><a href="#3-组播转单播" class="headerlink" title="3. 组播转单播"></a>3. 组播转单播</h1><p>组播转单播的原理并不复杂，udpxy和msd_lite会将请单播求链接转换为组播链接，并拉去对应的组播数据流返回给客户端。</p>
+<p>但由于光猫的IPTV口与网口通常是2个独立的网口，并且无法复用，这也就意味着你需要一台独立的双网口设备，一个网口接光猫IPTV口，用于接收组播数据；一个网口接局域网LAN口，用于接收单播请求。</p>
+<p>考虑到这台设备的本质就是连通2个不同的网络，这其实就是路由器的职责，因此，用路由器运行该服务是比较合理的，还能省去LAN口的连接。</p>
+<p>这里主要以OpenWRT为例，其他路由器系统可以参考配置。</p>
+<h2 id="3-1-线路连接"><a href="#3-1-线路连接" class="headerlink" title="3.1. 线路连接"></a>3.1. 线路连接</h2><p>这里根据光猫的IPTV口是否会通过DHCP分配IP，需要采用不同的连接方式。</p>
+<ol>
+<li><p>IPTV口不会分配IP</p>
+<p> 这种情况是最简单的了，只需要将光猫的IPTV口插到路由器的LAN口即可。</p>
+</li>
+<li><p>IPTV口会分配IP</p>
+<p> 这种情况下我们需要在OpenWRT中创建一个新的网络接口，并绑定到一个空闲的物理网口。要释放物理网口，可以在<code>网络/网口配置</code>中，取消勾选并保存，这里以<code>eth2</code>为例。新的网络接口配置如下：</p>
+<ul>
+<li>名称：iptv</li>
+<li>协议：DHCP客户端</li>
+<li>设备：eth2</li>
+<li>防火墙：iptv（新建）</li>
+</ul>
+<p> 最后在<code>网络/接口/设备/br-lan配置/高级设备选项</code>中，打开<code>启用 IGMP 嗅探</code>。</p>
+</li>
+</ol>
+<h2 id="3-2-udpxy配置"><a href="#3-2-udpxy配置" class="headerlink" title="3.2 udpxy配置"></a>3.2 udpxy配置</h2><p>根据线路连接的不同，配置也会稍有不同：</p>
+<ol>
+<li><p>IPTV口接路由器LAN口</p>
+<ul>
+<li><code>绑定 IP/接口</code>：br-lan</li>
+<li><code>端口</code>：4022</li>
+<li><code>源 IP/接口</code>：br-lan</li>
+</ul>
+</li>
+<li><p>IPTV口接路由器新建网口</p>
+<ul>
+<li><code>绑定 IP/接口</code>：br-lan</li>
+<li><code>端口</code>：4022</li>
+<li><code>源 IP/接口</code>：iptv</li>
+</ul>
+</li>
+</ol>
+<h2 id="3-3-msd-lite配置"><a href="#3-3-msd-lite配置" class="headerlink" title="3.3 msd_lite配置"></a>3.3 msd_lite配置</h2><p>根据线路连接的不同，配置也会稍有不同：</p>
+<ol>
+<li><p>IPTV口接路由器LAN口</p>
+<ul>
+<li><code>端口</code>：4022</li>
+<li><code>源 IP/接口</code>：br-lan</li>
+</ul>
+</li>
+<li><p>IPTV口接路由器新建网口</p>
+<ul>
+<li><code>端口</code>：4022</li>
+<li><code>源 IP/接口</code>：iptv</li>
+</ul>
+</li>
+</ol>
+<h1 id="4-测试效果"><a href="#4-测试效果" class="headerlink" title="4. 测试效果"></a>4. 测试效果</h1><p>假设你的路由器IP为<a href="192.168.50.1">192.168.50.1</a>, 组播地址为<a href="rtp://228.1.1.235:8002">rtp:&#x2F;&#x2F;228.1.1.235:8002</a>，那么对应的单播地址为<a target="_blank" rel="noopener" href="http://192.168.50.1:4022/rtp/228.1.1.235:8002">http://192.168.50.1:4022/rtp/228.1.1.235:8002</a>，使用VLC即可播放。</p>
+<p>最后再结合zerotier或tailscale等异地组网机制，即可在异地通过单播链接获取直播流，实测上行带宽占用大约10Mbps，完全在可用的范围。</p>
+<p>另外一点题外话，经过测试，虽然我并没有开通IPTV，但仍然可以观看直播，猜测移动对IPTV的限制较弱，开通IPTV仅仅是给安装一个机顶盒，组播数据则是始终存在的，自此免费的目的也达到了。</p>
+<h1 id="5-参考资料"><a href="#5-参考资料" class="headerlink" title="5. 参考资料"></a>5. 参考资料</h1><p><a target="_blank" rel="noopener" href="https://github.com/qwerttvv/Beijing-IPTV/blob/master/howto.md">https://github.com/qwerttvv/Beijing-IPTV/blob/master/howto.md</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/05/12/deploy-web-file-manager-on-linux.html" rel="prev" title="在Linux上部署Web文件管理器">
+                  <i class="fa fa-angle-left"></i> 在Linux上部署Web文件管理器
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Ryan Wong</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"colorfulshark","repo":"colorfulshark.github.io","client_id":"be1f8797df56b50805c6","client_secret":"c71e3d4db1cbda57e39a3fd1ae7f306519632948","admin_user":"colorfulshark","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"1f1a2085f2a7201369deed49f21b867b"}</script>
+<script src="/js/third-party/comments/gitalk.js" defer></script>
+
+</body>
+</html>
