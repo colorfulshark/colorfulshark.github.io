@@ -382,13 +382,15 @@ td {
   margin-top: 4px;
 }
 .toggle.toggle-arrow :first-child {
+  left: 50%;
   top: 2px;
-  transform: rotate(-45deg);
+  transform: rotate(45deg);
   width: 50%;
 }
 .toggle.toggle-arrow :last-child {
+  left: 50%;
   top: -2px;
-  transform: rotate(45deg);
+  transform: rotate(-45deg);
   width: 50%;
 }
 .toggle.toggle-close :nth-child(2) {
@@ -396,11 +398,11 @@ td {
 }
 .toggle.toggle-close :first-child {
   top: 6px;
-  transform: rotate(-45deg);
+  transform: rotate(45deg);
 }
 .toggle.toggle-close :last-child {
   top: -6px;
-  transform: rotate(45deg);
+  transform: rotate(-45deg);
 }
 /*!
   Theme: Default
@@ -1165,10 +1167,10 @@ pre code {
 }
 @media (max-width: 991px) {
   .sidebar {
-    right: -320px;
+    left: -320px;
   }
   .sidebar-active .sidebar {
-    right: 0;
+    left: 0;
   }
   .sidebar {
     background: #222;
@@ -1201,7 +1203,7 @@ pre code {
     vertical-align: middle;
   }
   .links-of-author a::before {
-    background: #62570a;
+    background: #6fc3e7;
     display: inline-block;
     margin-right: 3px;
     transform: translateY(-2px);
@@ -1251,11 +1253,11 @@ pre code {
   opacity: 0.6;
   position: fixed;
   z-index: 30;
-  right: 30px;
+  left: 30px;
 }
 @media (max-width: 991px) {
   .sidebar-toggle {
-    right: 20px;
+    left: 20px;
   }
 }
 .sidebar-toggle:hover {
@@ -1271,13 +1273,15 @@ pre code {
 }
 @media (any-hover: hover) {
   body:not(.sidebar-active) .sidebar-toggle:hover :first-child {
+    left: 50%;
     top: 2px;
-    transform: rotate(-45deg);
+    transform: rotate(45deg);
     width: 50%;
   }
   body:not(.sidebar-active) .sidebar-toggle:hover :last-child {
+    left: 50%;
     top: -2px;
-    transform: rotate(45deg);
+    transform: rotate(-45deg);
     width: 50%;
   }
 }
@@ -1286,11 +1290,11 @@ pre code {
 }
 .sidebar-active .sidebar-toggle :first-child {
   top: 6px;
-  transform: rotate(-45deg);
+  transform: rotate(45deg);
 }
 .sidebar-active .sidebar-toggle :last-child {
   top: -6px;
-  transform: rotate(45deg);
+  transform: rotate(-45deg);
 }
 .sidebar-nav {
   font-size: 0.875em;
@@ -2506,7 +2510,6 @@ header.header {
   justify-content: space-between;
   margin: 0 auto;
   width: calc(100% - 20px);
-  flex-direction: row-reverse;
 }
 @media (max-width: 767px) {
   .main {
@@ -2541,7 +2544,7 @@ header.header {
   }
 }
 .footer-inner {
-  padding-right: 252px;
+  padding-left: 252px;
 }
 @media (max-width: 991px) {
   .footer-inner {
