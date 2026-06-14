@@ -29,7 +29,7 @@
 <meta property="og:description" content="本文介绍如何在 Debian&#x2F;Ubuntu 系 Linux 中安装 Rime 输入法，并配置雾凇拼音。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-06-13T13:46:28.000Z">
-<meta property="article:modified_time" content="2026-06-13T14:18:48.492Z">
+<meta property="article:modified_time" content="2026-06-14T03:42:25.431Z">
 <meta property="article:author" content="Ryan Wong">
 <meta property="article:tag" content="linux">
 <meta property="article:tag" content="输入法">
@@ -61,6 +61,8 @@
 <script src="/js/third-party/search/local-search.js" defer></script>
 
 
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.1/mermaid.min.js","integrity":"sha256-BmQmdWDS8X2OTbrwELWK366LV6escyWhHHe0XCTU/Hk="}}</script>
+  <script src="/js/third-party/tags/mermaid.js" defer></script>
 
 
   <script src="/js/third-party/fancybox.js" defer></script>
@@ -256,9 +258,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">Posted on</span>
-      
 
-      <time title="Created: 2026-06-13 21:46:28 / Modified: 22:18:48" itemprop="dateCreated datePublished" datetime="2026-06-13T21:46:28+08:00">2026-06-13</time>
+      <time title="Created: 2026-06-13 21:46:28" itemprop="dateCreated datePublished" datetime="2026-06-13T21:46:28+08:00">2026-06-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2026-06-14 11:42:25" itemprop="dateModified" datetime="2026-06-14T11:42:25+08:00">2026-06-14</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -285,7 +293,10 @@
 <span id="more"></span>
 
 <h1 id="输入法框架选择与安装"><a href="#输入法框架选择与安装" class="headerlink" title="输入法框架选择与安装"></a>输入法框架选择与安装</h1><p>Linux 中文输入法通常由三层组成：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">应用程序</span><br><span class="line">  ↓</span><br><span class="line">输入法框架：IBus / Fcitx5</span><br><span class="line">  ↓</span><br><span class="line">输入法引擎：Rime</span><br><span class="line">  ↓</span><br><span class="line">具体配置：雾凇拼音</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight mermaid">flowchart TD
+    A[应用程序] --&gt; B[输入法框架：IBus / Fcitx5]
+    B --&gt; C[输入法引擎：Rime]
+    C --&gt; D[具体配置：雾凇拼音]</code></pre>
 
 <p>IBus 更适合 GNOME 桌面，因为 GNOME 对 IBus 集成较好。</p>
 <p>Fcitx5 更适合 KDE、MATE、XFCE、LXQt、xrdp 等环境，中文输入体验和兼容性通常更好。</p>
